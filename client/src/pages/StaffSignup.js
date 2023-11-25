@@ -7,11 +7,15 @@ import "./authstyle.css"
 const Signup = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const {signup, error} = useSignup()
+  const [firstname, setFirstname] = useState('')
+  const [lastname, setLastname] = useState('')
+  const [airline, setAirline] = useState('')
+
+  const {staff_signup, error} = useSignup()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    await signup(email, password)
+    await staff_signup(firstname, lastname, airline, email, password)
   }
 
   return (
@@ -21,7 +25,28 @@ const Signup = () => {
           <img src="plane.jpg" alt="Plane" />
         </div>
         <form className="auth-form" onSubmit={handleSubmit}>
-          <h3>Customer Sign up</h3>
+          <h3>Staff Sign up</h3>
+
+          <label>First Name</label>
+          <input
+            type="text"
+            onChange={(e) => setFirstname(e.target.value)}
+            value={firstname}
+          />
+
+          <label>Last Name</label>
+            <input
+              type="text"
+              onChange={(e) => setLastname(e.target.value)}
+              value={lastname}
+            />
+          
+          <label>Airline</label>
+            <input
+              type="text"
+              onChange={(e) => setAirline(e.target.value)}
+              value={airline}
+            />
 
           <label>Email Address</label>
           <input
@@ -45,8 +70,8 @@ const Signup = () => {
               <Link to="/login">Log In </Link>
             </p>
             <p>
-              Airline staff?{" "}
-              <Link to="/staffsignup">Sign up </Link>
+              Customer?{" "}
+              <Link to="/signup">Sign up </Link>
             </p>
           </div>
         </form>
