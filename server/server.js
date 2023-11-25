@@ -206,6 +206,67 @@ app.post('/api/profile/tickets', async (req, res) => {
   })
 });
 
+// UNFINISHED
+// /*  Create New Flight
+//     User provides information for a new flight, a new flight is created under the user's airline
+//     JSON FORMAT
+//     {
+//       departure_datetime:   datetime
+//       arrival_datetime:     datetime
+//       start_airport:        string
+//       dest_airport:         string
+//       base_price:           float
+//       airplane_ID:          int
+//     }
+//     TODO set flight_ID to AUTO_INCREMENT in the database column?, and check that airplane being used is of the correct airline
+// */
+// app.post('/api/flights/create', (req, res) => {
+//   console.log('entered flights route');
+//   const{ departure_datetime, arrival_datetime, start_airport, dest_airport, base_price, airplane_ID} = req.body;
+//   //flight_ID is auto generated, flight_status always 'on-time'
+//   const flight_ID = 123; const status = 'on-time';  
+//   const flightSQL = 'INSERT INTO flight (flight_ID, departure_datetime, arrival_datetime, base_price, flight_status) VALUES (?, ?, ?, ?, ?)';
+//   const locationSQL = 'INSERT INTO flight_location (flight_ID, departure_datetime, start_airport_code, dest_airport_code) VALUES (?, ?, ?, ?)';
+//   const airplaneSQL = 'INSERT INTO flies (flight_ID, departure_datetime, airplane_ID) VALUES (?, ?, ?)';
+
+//   //Insert into flight table
+//   db.query(flightSQL, [flight_ID, departure_datetime, arrival_datetime, base_price, airplane_ID], (err, results) => {
+//     if (err) {
+//       console.error('Error executing query:', err);
+//       return res.status(500).json({ error: 'Internal Server Error' });
+//     }
+//   })
+//   db.query(locationSQL, [flight_ID, departure_datetime, start_airport, dest_airport], (err, results) => {
+//     if (err) {
+//       console.error('Error executing query:', err);
+//       return res.status(500).json({ error: 'Internal Server Error' });
+//     }
+//   })
+//   db.query(airplaneSQL, [flight_ID, departure_datetime, airplane_ID], (err, results) => {
+//     if (err) {
+//       console.error('Error executing query:', err);
+//       return res.status(500).json({ error: 'Internal Server Error' });
+//     }
+//   })
+//   res.send("Successfully created flight");
+// });
+
+// /*  Change Flight Status
+//     User provides a flight_ID & departure datetime, and the flight status to be updated to
+// */
+// app.patch('/api/flights/change_status', (req, res) => {
+//   const { flight_ID, departure_datetime, flight_status } = req.body;
+
+//   sql = 'UPDATE flight SET flight_status = ? WHERE flight_ID = ?, departure_datetime = ?';
+//   db.query(sql, [flight_status, flight_ID, departure_datetime], (err, results) => {
+//     if (err) {
+//       console.error('Error executing query:', err);
+//       return res.status(500).json({ error: 'Internal Server Error' });
+//     }
+//     res.send("Successfully updated flight status");
+//   })
+// });
+
 // Log server massage
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on port ${process.env.PORT}`);
