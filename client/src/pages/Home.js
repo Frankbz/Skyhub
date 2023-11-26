@@ -1,5 +1,6 @@
 import FlightSearch from "../components/FlightSearch";
 import Ticket from "../components/Ticket";
+import Navbar from "../components/Navbar";
 
 const Home = () => {
     const flightData = {
@@ -15,8 +16,9 @@ const Home = () => {
       };
     return ( 
         <>
-        <FlightSearch />
-        <Ticket flightData={flightData} />
+          <Navbar />
+          <FlightSearch />
+          <Ticket flightData={flightData} />
         </>
      );
 }
