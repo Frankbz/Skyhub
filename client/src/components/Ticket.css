@@ -1,0 +1,55 @@
+.ticketContainer {
+    width: 80%;
+    margin: 16px auto;
+    padding: 16px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #d2a073;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .flightDetails {
+    flex-grow: 1;
+  }
+  
+  .airplane {
+    width: 30px;
+    height: auto;
+  }
+  
+  .route {
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .departureCity,
+  .arrivalCity {
+    font-weight: bold;
+    margin: 0 4px;
+  }
+  
+  .flightCode {
+    margin-left: auto;
+    font-size: 14px;
+    color: #777;
+  }
+  
+  .datetime {
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .date,
+  .time {
+    display: block;
+  }
+  
+  .price {
+    font-size: 24px;
+    font-weight: bold;
+    color: #3498db;
+  }
+  
