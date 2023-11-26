@@ -1,0 +1,49 @@
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: papayawhip; 
+    color: #654321;
+  }
+  
+  .navbar-link {
+    text-decoration: none;
+    color: #654321; 
+    margin-right: 15px;
+    padding: 5px;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+  }
+  
+  .navbar-link:hover:not(.skyhub) {
+    background-color: #d9cba7; /* Lighter warm brown on hover */
+  }
+  
+  .navbar-item {
+    display: flex;
+    align-items: center;
+  }
+  
+
+  .navbar-link.logout {
+    background-color: papayawhip; 
+    border: none;
+    cursor: pointer;
+  }
+  
+  .navbar-link.logout:hover {
+    background-color: #e0cba7; /* Lighter warm brown on hover */
+  }
+
+  
+  /* Larger and bold Skyhub */
+  .navbar-link.skyhub {
+    font-size: 1.5em;
+    font-weight: bold;
+  }
+
+  .navbar-link.profile {
+    margin-left: 900px;
+  }
+  
