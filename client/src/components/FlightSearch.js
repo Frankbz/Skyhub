@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import styles from './FlightSearch.module.css';
 
-const FlightSearch = () => {
+const FlightSearch = ({handleFlights}) => {
   const [searchParams, setSearchParams] = useState({
     sourceCity: '',
     destinationCity: '',
@@ -35,6 +35,7 @@ const FlightSearch = () => {
     
     const json = await response.json();
     console.log("json", json)
+    handleFlights(json)
     
 
   };
