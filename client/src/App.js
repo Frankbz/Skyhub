@@ -1,4 +1,5 @@
 import {BrowserRouter, Route, Routes, Navigate} from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 // pages & components
 import Home from './pages/Home';
