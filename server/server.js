@@ -275,6 +275,10 @@ app.post('/api/flights/purchase_ticket', async (req, res) =>{
           reject(err);
           return res.status(500).json({ error: 'Internal Server Error' });
         }
+        if (!results[0]){
+          console.error('No such flight found!');
+          return res.status(500).json({ error: 'No Such Flight Found' });
+        }
         price = results[0].base_price;
         //console.log(price);
         resolve(price);
