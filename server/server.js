@@ -137,8 +137,8 @@ app.post('/api/user/login', async (req, res) => {
     User optionally provides date range, start and destination airports. Returns the search results of all flights from the airline that match the criteria.
     JSON:
     {
-      start_date_range: datetime, OPTIONAL
-      end_date_range:   datetime, OPTIONAL
+      start_date_range: datetime,
+      end_date_range:   datetime,
       start_airport:    string,   OPTIONAL
       dest_airport:     string,   OPTIONAL
       start_city:       string,   OPTIONAL
@@ -155,10 +155,12 @@ app.post('/api/flights/view', async (req, res) => {
   //Array to dynamically hold values for the prepared statement
   const values = [];
   if (start_date_range && end_date_range)
+    if (start_date_range == end_date_range)
+
     values.push(start_date_range, end_date_range);
 
   //If query contains date range, use query's date range, otherwise use now to +30 days
-  query += (start_date_range && end_date_range) ? ('? AND ?') : ('NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)');
+  query += (start_date_range != end_date_range) ? ('? AND ?') : ('? AND DATE_ADD(?, INTERVAL 1 DAY)');
   if (start_airport){
     query += ' AND depart_airport_code = ?';
     values.push(start_airport);}
@@ -188,7 +190,7 @@ app.post('/api/flights/view', async (req, res) => {
     User provides the user's email. Returns all tickets purchased by the user.
     JSON:
     {
-      email:  string
+      email:       string
     }
 */
 app.post('/api/profile/tickets', async (req, res) => {
@@ -204,6 +206,97 @@ app.post('/api/profile/tickets', async (req, res) => {
     res.json(results);
   })
 });
+
+
+/*  Update Customer Info 
+    User provides all customer information except for the password. Adds the provided information to the customer's account.
+    JSON:
+    {
+      email:  string
+      first_name:  string
+      last_name:   string
+      building:    string
+      street:      string
+      apartment:   string
+      city:        string
+      state:       string
+      zipcode:     string
+      card_type:   string
+      card_number: string
+      name_on_card:string
+      card_exp_date:date
+      passport_num:string
+      passport_expr:date
+      passport_country:string
+      date_of_birth:date
+    }
+*/
+app.put('/api/profile/update_info', async (req, res) =>{
+  const {email, first_name, last_name, building, street, apartment, city, state, zipcode, card_type, card_number, name_on_card, card_exp_date, passport_num, passport_expr, passport_country, date_of_birth} = req.body;
+
+  let query = 'UPDATE customer SET first_name = ?, last_name = ?, building = ?, street = ?, apartment = ?, city = ?, state = ?, zipcode = ?, \
+  card_type = ?, card_number = ?, name_on_card = ?, card_exp_date = ?, passport_num = ?, passport_expr = ?, passport_country = ?, date_of_birth = ? \
+  WHERE email = ?';
+
+  db.query(query, [first_name, last_name, building, street, apartment, city, state, zipcode, card_type, card_number, name_on_card, card_exp_date, passport_num, passport_expr, passport_country, date_of_birth, email], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    //console.log("success");
+    res.json(results);
+  })
+});
+
+/*  Purchase Ticket
+    User provides user's email, flight_ID and departure datetime of flight to purchase a ticket of, as well as the first/last name and DOB of who the ticket is intended for. Creates and returns a new ticket using the customer's info
+    JSON:
+    {
+      email:              string
+      flight_ID:          int
+      departure_datetime: datetime
+      first_name:         string
+      last_name:          string
+      date_of_birth:      date
+    }
+*/
+app.post('/api/flights/purchase_ticket', async (req, res) =>{
+  const {email, flight_ID, departure_datetime, first_name, last_name, date_of_birth} = req.body;
+  let values;
+  let price;
+  //Gets the base price of the flight
+  const flightQuery = "SELECT base_price FROM flight WHERE flight_ID = ? AND departure_datetime = ?";
+  function executeQuery() {
+    return new Promise((resolve, reject) =>{
+      db.query(flightQuery, [flight_ID, departure_datetime], (err, results) => {
+        if (err) {
+          console.error('Error executing query:', err);
+          reject(err);
+          return res.status(500).json({ error: 'Internal Server Error' });
+        }
+        price = results[0].base_price;
+        console.log(price);
+        resolve(price);
+      });
+    });
+  }
+
+  executeQuery() // run first query to find base_price
+    .then((price)=> {
+      values = [flight_ID, departure_datetime, price*1.25, first_name, last_name, date_of_birth, email];
+      const query = "INSERT INTO ticket VALUES (0, ?, ?, ?, ?, ?, ?, ?, NOW())";
+
+      //Second query to insert ticket with the correct values
+      db.query(query, values, (err, results) => {           
+        if (err) {
+          console.error('Error executing query:', err);
+          return res.status(500).json({ error: 'Internal Server Error' });
+        }
+        res.json(results);
+      })
+    });
+});
+
 
 // UNFINISHED
 // /*  Create New Flight

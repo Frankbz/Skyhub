@@ -2,15 +2,15 @@ import FlightSearch from "../components/FlightSearch";
 import Ticket from "../components/Ticket";
 import Navbar from "../components/Navbar";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 
 const Home = () => {
-    const [flights, setFlights] = useState([]);
+  const [flights, setFlights] = useState([]);
 
-    const handleFlights = (data) => {
-      setFlights(data);
-    };
+  const handleFlights = (data) => {
+    setFlights(data);
+  };
 
     return ( 
         <>
