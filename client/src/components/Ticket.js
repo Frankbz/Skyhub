@@ -6,9 +6,11 @@ import Form from 'react-bootstrap/Form';
 
 const Ticket = (props) => {
   const { flightData } = props;
+  const user = JSON.parse(localStorage.getItem('user'));
 
   const [showModal, setShowModal] = useState(false);
   const [userInfo, setUserInfo] = useState({
+    email: user.email,
     first_name: "",
     last_name: "",
     building: "",
@@ -16,15 +18,15 @@ const Ticket = (props) => {
     apartment: "",
     city: "",
     state: "",
-    zip_code: "",
+    zipcode: "",
     card_type: "",
     card_number: "",
     name_on_card: "",
     card_exp_date: "",
     passport_num: "",
-    passport_exp_date: "",
+    passport_expr: "",
     passport_country: "",
-    birthday: ""
+    date_of_birth: ""
   })
 
   const handleChange = (e) => {
@@ -43,12 +45,40 @@ const Ticket = (props) => {
     setShowModal(true)  
   }
 
-  const handleBuyTicket = () => {
+  const handleBuyTicket = async () => {
     setShowModal(false)
+    const formattedDepartureDatetime = new Date(flightData.departure_datetime).toISOString().split('T')[0];
+    
+    const response1 = await fetch('http://localhost:4000/api/profile/update_info', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(userInfo)
+          })
+        
+    const json1 = await response1.json();
+    console.log(json1)
+    if (!response1.ok){
+      console.log(json1.error)
+    }
+    
+    // const response2 = await fetch('http://localhost:4000/api/flights/purchase_ticket', {
+    //         method: 'POST',
+    //         headers: {'Content-Type': 'application/json'},
+    //         body: JSON.stringify({
+    //           email: userInfo.email,
+    //           flight_ID: flightData.flight_ID,
+    //           departure_datetime: formattedDepartureDatetime,
+    //           first_name: userInfo.first_name,
+    //           last_name: userInfo.last_name,
+    //           date_of_birth:userInfo.date_of_birth
+    //         })
+    //       })
 
-    console.log(userInfo)
-
-    // call API here
+    // const json2 = await response2.json();
+    // if (!response2.ok){
+    //   console.log(json2.error)
+    // }
+    
   }
 
   //console.log(userInfo)
@@ -163,7 +193,7 @@ const Ticket = (props) => {
               <Form.Label>Zip Code</Form.Label>
               <input
                 type="text"
-                name="zip_code"
+                name="zipcode"
                 onChange={handleChange}
                 value={userInfo.zipcode}
               />
@@ -174,7 +204,7 @@ const Ticket = (props) => {
               name="card_type"
               onChange={handleChange}
               value={userInfo.card_type}
-              aria-label="Default select example"
+              
             >
               <option value="debit">Debit Card</option>
               <option value="credit">Credit Card</option>
@@ -220,9 +250,9 @@ const Ticket = (props) => {
               <Form.Label>Passport Expire Date</Form.Label>
               <input
                 type="date"
-                name="passport_exp_date"
+                name="passport_expr"
                 onChange={handleChange}
-                value={userInfo.passport_exp_date}
+                value={userInfo.passport_expr}
               />
             </Form.Group>
             <Form.Group className="mb-3">
@@ -238,9 +268,9 @@ const Ticket = (props) => {
               <Form.Label>Birthday</Form.Label>
               <input
                 type="date"
-                name="birthday"
+                name="date_of_birth"
                 onChange={handleChange}
-                value={userInfo.birthday}
+                value={userInfo.date_of_birth}
               />
             </Form.Group>
           </Form>
