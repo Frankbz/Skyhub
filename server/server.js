@@ -155,12 +155,13 @@ app.post('/api/flights/view', async (req, res) => {
   //Array to dynamically hold values for the prepared statement
   const values = [];
   if (start_date_range && end_date_range)
-    if (start_date_range == end_date_range)
-
     values.push(start_date_range, end_date_range);
 
   //If query contains date range, use query's date range, otherwise use now to +30 days
-  query += (start_date_range != end_date_range) ? ('? AND ?') : ('? AND DATE_ADD(?, INTERVAL 1 DAY)');
+  if (start_date_range && end_date_range)
+    query += (start_date_range != end_date_range) ? ('? AND ?') : ('? AND DATE_ADD(?, INTERVAL 1 DAY)');
+  else
+    query += 'NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)';
   if (start_airport){
     query += ' AND depart_airport_code = ?';
     values.push(start_airport);}
@@ -202,7 +203,7 @@ app.post('/api/profile/tickets', async (req, res) => {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
-    console.log(results);
+    //console.log(results);
     res.json(results);
   })
 });
@@ -243,7 +244,7 @@ app.put('/api/profile/update_info', async (req, res) =>{
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
-    //console.log("success");
+
     res.json(results);
   })
 });
@@ -275,7 +276,7 @@ app.post('/api/flights/purchase_ticket', async (req, res) =>{
           return res.status(500).json({ error: 'Internal Server Error' });
         }
         price = results[0].base_price;
-        console.log(price);
+        //console.log(price);
         resolve(price);
       });
     });
@@ -292,6 +293,7 @@ app.post('/api/flights/purchase_ticket', async (req, res) =>{
           console.error('Error executing query:', err);
           return res.status(500).json({ error: 'Internal Server Error' });
         }
+        console.log(results);
         res.json(results);
       })
     });
