@@ -144,7 +144,7 @@ app.post('/api/user/login', async (req, res) => {
       start_city:       string,   OPTIONAL
       dest_city:        stirng,   OPTIONAL
     }
-*/
+*/ 
 app.post('/api/flights/view', async (req, res) => {
   const { start_date_range, end_date_range, start_airport, dest_airport, start_city, dest_city} = req.body;
   console.log(req.body)
@@ -203,7 +203,7 @@ app.post('/api/profile/tickets', async (req, res) => {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
-    //console.log(results);
+    // console.log(results);
     res.json(results);
   })
 });
@@ -234,7 +234,7 @@ app.post('/api/profile/tickets', async (req, res) => {
 */
 app.put('/api/profile/update_info', async (req, res) =>{
   const {email, first_name, last_name, building, street, apartment, city, state, zipcode, card_type, card_number, name_on_card, card_exp_date, passport_num, passport_expr, passport_country, date_of_birth} = req.body;
-
+  // console.log(req.body)
   let query = 'UPDATE customer SET first_name = ?, last_name = ?, building = ?, street = ?, apartment = ?, city = ?, state = ?, zipcode = ?, \
   card_type = ?, card_number = ?, name_on_card = ?, card_exp_date = ?, passport_num = ?, passport_expr = ?, passport_country = ?, date_of_birth = ? \
   WHERE email = ?';
@@ -244,7 +244,7 @@ app.put('/api/profile/update_info', async (req, res) =>{
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
-
+    // console.log("success");
     res.json(results);
   })
 });

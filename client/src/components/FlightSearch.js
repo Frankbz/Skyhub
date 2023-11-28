@@ -34,7 +34,6 @@ const FlightSearch = ({handleFlights}) => {
           })
     
     const json = await response.json();
-    console.log("json", json)
     handleFlights(json)
     
 

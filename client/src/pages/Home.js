@@ -2,7 +2,7 @@ import FlightSearch from "../components/FlightSearch";
 import Ticket from "../components/Ticket";
 import Navbar from "../components/Navbar";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 
 const Home = () => {

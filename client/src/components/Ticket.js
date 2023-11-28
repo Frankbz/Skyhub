@@ -1,14 +1,18 @@
-import "./Ticket.css"; 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
+import Cell from "./Cell";
 
 
 const Ticket = (props) => {
+  const navigate = useNavigate();
   const { flightData } = props;
+  const user = JSON.parse(localStorage.getItem('user'));
 
   const [showModal, setShowModal] = useState(false);
   const [userInfo, setUserInfo] = useState({
+    email: user.email,
     first_name: "",
     last_name: "",
     building: "",
@@ -16,15 +20,15 @@ const Ticket = (props) => {
     apartment: "",
     city: "",
     state: "",
-    zip_code: "",
+    zipcode: "",
     card_type: "",
     card_number: "",
     name_on_card: "",
     card_exp_date: "",
     passport_num: "",
-    passport_exp_date: "",
+    passport_expr: "",
     passport_country: "",
-    birthday: ""
+    date_of_birth: ""
   })
 
   const handleChange = (e) => {
@@ -43,58 +47,61 @@ const Ticket = (props) => {
     setShowModal(true)  
   }
 
-  const handleBuyTicket = () => {
+  
+  const handleBuyTicket = async () => {
     setShowModal(false)
+    const originalDate = new Date(flightData.departure_datetime);
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    const formattedDate = originalDate.toLocaleString('en-US', options)
+    .replace(/\//g, '-')  // Replace slashes with hyphens
+    .replace(/,/g, '')  // Remove commas
+    .replace(/^(\d{2})-(\d{2})-(\d{4})/, '$3-$1-$2'); // Rearrange to the desired format
 
-    console.log(userInfo)
+    
+    const response1 = await fetch('http://localhost:4000/api/profile/update_info', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(userInfo)
+          })
+        
+    const json1 = await response1.json();
+    
+    if (!response1.ok){
+      console.log(json1.error)
+      return
+    }
+    
+    const response2 = await fetch('http://localhost:4000/api/flights/purchase_ticket', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              email: userInfo.email,
+              flight_ID: flightData.flight_ID,
+              departure_datetime: formattedDate,
+              first_name: userInfo.first_name,
+              last_name: userInfo.last_name,
+              date_of_birth:userInfo.date_of_birth
+            })
+          })
 
-    // call API here
+    const json2 = await response2.json();
+    if (!response2.ok){
+      console.log(json2.error)
+      return
+    }
+    navigate("/")
+
   }
 
-  //console.log(userInfo)
   return (
     <>
-    <div className="ticket">
-    <div className="header-section">
-      <h2 className="airline-name">{flightData.airline_name}</h2>
-      <div className="top-right">
-        <p className="flight-id">ID: {flightData.flight_ID}</p>
-        <img src="https://raw.githubusercontent.com/pizza3/asset/master/airplane2.png" alt="Airplane" className="plane-image" />
-      </div>
-    </div>
-    <p className="seats">Seats: {flightData.num_of_seats}</p>
-    <div className="route-info">
-      <div className="source">
-        <p className="city-name">{flightData.departure_city}</p>
-        <p className="airport-code">{flightData.depart_airport_code}</p>
-        <p className="time-info">
-          <strong>{new Date(flightData.departure_datetime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</strong>
-          <br />
-          {new Date(flightData.departure_datetime).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}
-        </p>
-      </div>
-      <div className="arrow">→</div>
-      <div className="dest">
-        <p className="city-name">{flightData.arrival_city}</p>
-        <p className="airport-code">{flightData.arrive_airport_code}</p>
-        <p className="time-info">
-          <strong>{new Date(flightData.arrival_datetime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</strong>
-          <br />
-          {new Date(flightData.arrival_datetime).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}
-        </p>
-      </div>
-    </div>
-    <div className="status-section">
-      <p className="status">Status: {flightData.flight_status}</p>
-    </div>
-    <button onClick={handleCheckOut} className="checkout-button">Check Out</button>
-  </div>
-  {/* Modal */}
-  <Modal show={showModal} onHide={handleClose}>
-    <Modal.Header closeButton>
-      <Modal.Title>Ticket Checkout</Modal.Title>
-    </Modal.Header>
-    <Modal.Body>
+      <Cell flightData={flightData} handleButtonClick={handleCheckOut} buttonName={"Check Out"}/>
+      {/* Modal */}
+      <Modal show={showModal} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Ticket Checkout</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
           <Form>
             <Form.Group className="mb-2" >
               <Form.Label>First Name</Form.Label>
@@ -163,7 +170,7 @@ const Ticket = (props) => {
               <Form.Label>Zip Code</Form.Label>
               <input
                 type="text"
-                name="zip_code"
+                name="zipcode"
                 onChange={handleChange}
                 value={userInfo.zipcode}
               />
@@ -174,7 +181,7 @@ const Ticket = (props) => {
               name="card_type"
               onChange={handleChange}
               value={userInfo.card_type}
-              aria-label="Default select example"
+              
             >
               <option value="debit">Debit Card</option>
               <option value="credit">Credit Card</option>
@@ -220,9 +227,9 @@ const Ticket = (props) => {
               <Form.Label>Passport Expire Date</Form.Label>
               <input
                 type="date"
-                name="passport_exp_date"
+                name="passport_expr"
                 onChange={handleChange}
-                value={userInfo.passport_exp_date}
+                value={userInfo.passport_expr}
               />
             </Form.Group>
             <Form.Group className="mb-3">
@@ -238,9 +245,9 @@ const Ticket = (props) => {
               <Form.Label>Birthday</Form.Label>
               <input
                 type="date"
-                name="birthday"
+                name="date_of_birth"
                 onChange={handleChange}
-                value={userInfo.birthday}
+                value={userInfo.date_of_birth}
               />
             </Form.Group>
           </Form>
