@@ -46,11 +46,11 @@ const Profile = () => {
         <div className="container">
             <h3>Upcoming Flights</h3>
             {futureFlights.map((flightData) => (
-            <Cell flightData={flightData} handleButtonClick={handleCancel} buttonName={"Cancel"} />
+            <Cell flightData={flightData} handleButtonClick={handleCancel} buttonName={"Cancel"} buttonShow={user && user.email !== null && user.email !== undefined}/>
             ))}
             <h3>Past Flights</h3>
             {pastFlights.map((flightData) => (
-            <Cell flightData={flightData} handleButtonClick={handleCancel} buttonName={"Cancel"} />
+            <Cell flightData={flightData} handleButtonClick={handleCancel} buttonName={"Cancel"} buttonShow={user && user.email !== null && user.email !== undefined}/>
             ))}
             {/* <BarChart /> */}
         </div>
