@@ -3,6 +3,7 @@ import Ticket from "../components/Ticket";
 import Navbar from "../components/Navbar";
 
 import { useState } from "react";
+import { useEffect } from "react";
 
 
 const Home = () => {
@@ -11,6 +12,8 @@ const Home = () => {
   const handleFlights = (data) => {
     setFlights(data);
   };
+  
+  
 
     return ( 
         <>

@@ -135,33 +135,42 @@ app.post('/api/user/login', async (req, res) => {
 
 /*  VIEW FLIGHTS
     User optionally provides date range, start and destination airports. Returns the search results of all flights from the airline that match the criteria.
+    To check past flights, pass any value into the "past" parameter
     JSON:
     {
-      start_date_range: datetime,
-      end_date_range:   datetime,
+      start_date_range: datetime, OPTIONAL
+      end_date_range:   datetime, OPTIONAL
       start_airport:    string,   OPTIONAL
       dest_airport:     string,   OPTIONAL
       start_city:       string,   OPTIONAL
-      dest_city:        stirng,   OPTIONAL
+      dest_city:        string,   OPTIONAL
+      past:             string,     OPTIONAL
     }
-*/ 
+*/
 app.post('/api/flights/view', async (req, res) => {
-  const { start_date_range, end_date_range, start_airport, dest_airport, start_city, dest_city} = req.body;
+  const { start_date_range, end_date_range, start_airport, dest_airport, start_city, dest_city, past} = req.body;
   console.log(req.body)
   let query = "SELECT flight_ID, departure_datetime, arrival_datetime, base_price, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, airline_name, num_of_seats \
   FROM flight NATURAL JOIN flight_location JOIN Airport as A ON arrive_airport_code = A.airport_code JOIN Airport as B ON depart_airport_code = B.airport_code NATURAL JOIN flies NATURAL JOIN airplane\
-  WHERE departure_datetime BETWEEN ";
+  WHERE departure_datetime";
 
   //Array to dynamically hold values for the prepared statement
   const values = [];
   if (start_date_range && end_date_range)
     values.push(start_date_range, end_date_range);
 
+  //If query includes past (any value, as long as it exists in the query), return only flights that have already departed
+  if(past){
+    query += ' < NOW()';
+    //console.log("past");
+  }
   //If query contains date range, use query's date range, otherwise use now to +30 days
-  if (start_date_range && end_date_range)
-    query += (start_date_range != end_date_range) ? ('? AND ?') : ('? AND DATE_ADD(?, INTERVAL 1 DAY)');
+  else if (start_date_range && end_date_range)
+    query += (start_date_range != end_date_range) ? (' BETWEEN ? AND ?') : (' BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY)');
   else
-    query += 'NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)';
+    query += ' BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)';
+
+  //Checks start/dest airport and city if passed in
   if (start_airport){
     query += ' AND depart_airport_code = ?';
     values.push(start_airport);}
@@ -182,7 +191,7 @@ app.post('/api/flights/view', async (req, res) => {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
-    console.log(results);
+    //console.log(results);
     res.json(results);
   })
 });
@@ -203,7 +212,7 @@ app.post('/api/profile/tickets', async (req, res) => {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
-    // console.log(results);
+    //console.log(results);
     res.json(results);
   })
 });
@@ -234,7 +243,7 @@ app.post('/api/profile/tickets', async (req, res) => {
 */
 app.put('/api/profile/update_info', async (req, res) =>{
   const {email, first_name, last_name, building, street, apartment, city, state, zipcode, card_type, card_number, name_on_card, card_exp_date, passport_num, passport_expr, passport_country, date_of_birth} = req.body;
-  // console.log(req.body)
+
   let query = 'UPDATE customer SET first_name = ?, last_name = ?, building = ?, street = ?, apartment = ?, city = ?, state = ?, zipcode = ?, \
   card_type = ?, card_number = ?, name_on_card = ?, card_exp_date = ?, passport_num = ?, passport_expr = ?, passport_country = ?, date_of_birth = ? \
   WHERE email = ?';
@@ -244,7 +253,7 @@ app.put('/api/profile/update_info', async (req, res) =>{
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
-    // console.log("success");
+
     res.json(results);
   })
 });
@@ -275,6 +284,10 @@ app.post('/api/flights/purchase_ticket', async (req, res) =>{
           reject(err);
           return res.status(500).json({ error: 'Internal Server Error' });
         }
+        if (!results[0]){
+          console.error('No such flight found!');
+          return res.status(500).json({ error: 'No Such Flight Found' });
+        }
         price = results[0].base_price;
         //console.log(price);
         resolve(price);
@@ -299,6 +312,31 @@ app.post('/api/flights/purchase_ticket', async (req, res) =>{
     });
 });
 
+/*  DELETE TICKET
+    User passes in a ticket ID and the user's email. The ticket will be removed if the flight for the ticket is more than 24 hours away.
+    JSON:
+    {
+      email:     string
+      ticket_ID: int
+    }
+*/
+app.delete('/api/flights/delete_ticket', async (req, res) =>{
+  const {email, ticket_ID} = req.body;
+  const query = 'DELETE FROM ticket WHERE ticket_ID = ? AND payment_email = ? AND departure_datetime > DATE_ADD(NOW(), INTERVAL 1 DAY)'
+
+  db.query(query, [ticket_ID, email], (err, results) => {           
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    console.log(results.affectedRows);
+    const rowsAffected = results.affectedRows;
+    if (rowsAffected > 0)   
+      res.json({ success: true, message: 'Successfully removed ticket'});
+    else  
+      res.json({ success: false, message: 'You can not refund tickets less than 24 hours before the flight'});
+  })
+});
 
 // UNFINISHED
 // /*  Create New Flight
