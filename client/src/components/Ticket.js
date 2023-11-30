@@ -12,7 +12,7 @@ const Ticket = (props) => {
 
   const [showModal, setShowModal] = useState(false);
   const [userInfo, setUserInfo] = useState({
-    email: user.email,
+    email: user ? user.email : null,
     first_name: "",
     last_name: "",
     building: "",
@@ -95,7 +95,7 @@ const Ticket = (props) => {
 
   return (
     <>
-      <Cell flightData={flightData} handleButtonClick={handleCheckOut} buttonName={"Check Out"}/>
+      <Cell flightData={flightData} handleButtonClick={handleCheckOut} buttonName={"Check Out"} buttonShow={user && user.email !== null && user.email !== undefined}/>
       {/* Modal */}
       <Modal show={showModal} onHide={handleClose}>
         <Modal.Header closeButton>

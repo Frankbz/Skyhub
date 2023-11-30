@@ -1,6 +1,6 @@
 import "./Cell.css"
 
-const Cell = ({flightData, handleButtonClick, buttonName}) => {
+const Cell = ({flightData, handleButtonClick, buttonName, buttonShow}) => {
     return ( 
     <div className="ticket">
     <div className="header-section">
@@ -35,7 +35,7 @@ const Cell = ({flightData, handleButtonClick, buttonName}) => {
     <div className="status-section">
       <p className="status">Status: {flightData.flight_status}</p>
     </div>
-    <button onClick={handleButtonClick} className="checkout-button">{buttonName}</button>
+    {buttonShow ? <button onClick={handleButtonClick} className="checkout-button">{buttonName}</button> : <></>}
   </div>
      );
 }
