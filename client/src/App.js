@@ -7,6 +7,7 @@ import Signup from './pages/Signup';
 import Login from './pages/Login';
 import Profile from './pages/Profile'
 import StaffSignup from './pages/StaffSignup'
+import Spending from './pages/Spending';
 
 function App() {
   const user = JSON.parse(localStorage.getItem('user'));
@@ -21,6 +22,7 @@ function App() {
             <Route path='/signup' element= {<Signup />} ></Route>
             <Route path='/profile' element= {<Profile />} ></Route>
             <Route path='/staffsignup' element= {<StaffSignup />} ></Route>
+            <Route path='/spending' element= {<Spending />} ></Route>
           </Routes>
         </div>
       </BrowserRouter>

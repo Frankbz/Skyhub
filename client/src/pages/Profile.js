@@ -27,7 +27,7 @@ const Profile = () => {
             }
     }}
 
-    useEffect(() => getInfo, [])
+    useEffect(() => getInfo, [user])
 
     const handleCancel = async (ticket_ID) => { 
         const response = await fetch('http://localhost:4000/api/flights/delete_ticket', {
@@ -53,7 +53,7 @@ const Profile = () => {
         <>
         <Navbar />
         <div className="container">
-            <button style={{ position: 'fixed', right: '10px' }}>Add phones</button>
+            <button type="button" class="btn btn-warning" onClick={()=>{navigate("/spending")}} style={{ position: 'fixed', right: '10px'}}>Track my spending</button>
             <h3>Upcoming Flights</h3>
             {futureFlights.map((flightData) => (
             <Cell flightData={flightData} handleButtonClick={() => handleCancel(flightData.ticket_ID)} buttonName={"Cancel"} buttonShow={user && user.email !== null && user.email !== undefined}/>
@@ -63,7 +63,6 @@ const Profile = () => {
             <Cell flightData={flightData} handleButtonClick={() => handleCancel(flightData.ticket_ID)} buttonName={"Cancel"} buttonShow={user && user.email !== null && user.email !== undefined}/>
             ))}
             
-            {/* <BarChart /> */}
         </div>
         </>
      );
