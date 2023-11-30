@@ -26,10 +26,19 @@ const Profile = () => {
                 setFlights(json) // we have ticket ID here
             }
     }}
-    useEffect(()=>getInfo,[])
 
-    const handleCancel = () => { // TODO
-        console.log("cc")
+    useEffect(() => getInfo, [])
+
+    const handleCancel = async (ticket_ID) => { 
+        const response = await fetch('http://localhost:4000/api/flights/delete_ticket', {
+            method: 'DELETE',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ email: user.email, ticket_ID: ticket_ID })
+        })
+        const json = await response.json()
+        console.log("json", json)
+
+        window.location.reload()
     }
 
     const getCurrentDate = () => {
@@ -39,19 +48,19 @@ const Profile = () => {
     
     const futureFlights = flights.filter((flightData) => flightData.departure_datetime > getCurrentDate());
     const pastFlights = flights.filter((flightData) => flightData.departure_datetime <= getCurrentDate());
-    console.log(flights, futureFlights, pastFlights)
+
     return ( 
         <>
         <Navbar />
         <div className="container">
-            <button style={{ position: 'fixed', buttom: '10px', right: '10px' }}>Add phones</button>
+            <button style={{ position: 'fixed', right: '10px' }}>Add phones</button>
             <h3>Upcoming Flights</h3>
             {futureFlights.map((flightData) => (
-            <Cell flightData={flightData} handleButtonClick={handleCancel} buttonName={"Cancel"} buttonShow={user && user.email !== null && user.email !== undefined}/>
+            <Cell flightData={flightData} handleButtonClick={() => handleCancel(flightData.ticket_ID)} buttonName={"Cancel"} buttonShow={user && user.email !== null && user.email !== undefined}/>
             ))}
             <h3>Past Flights</h3>
             {pastFlights.map((flightData) => (
-            <Cell flightData={flightData} handleButtonClick={handleCancel} buttonName={"Cancel"} buttonShow={user && user.email !== null && user.email !== undefined}/>
+            <Cell flightData={flightData} handleButtonClick={() => handleCancel(flightData.ticket_ID)} buttonName={"Cancel"} buttonShow={user && user.email !== null && user.email !== undefined}/>
             ))}
             
             {/* <BarChart /> */}

@@ -46,7 +46,6 @@ const Ticket = (props) => {
   const handleCheckOut = () => {
     setShowModal(true)  
   }
-
   
   const handleBuyTicket = async () => {
     setShowModal(false)
@@ -89,7 +88,7 @@ const Ticket = (props) => {
       console.log(json2.error)
       return
     }
-    navigate("/")
+    navigate("/profile")
 
   }
 

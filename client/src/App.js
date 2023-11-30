@@ -9,6 +9,7 @@ import Profile from './pages/Profile'
 import StaffSignup from './pages/StaffSignup'
 
 function App() {
+  const user = JSON.parse(localStorage.getItem('user'));
   return (
     <div className="App">
       <header className="Skyhub">

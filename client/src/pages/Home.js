@@ -13,8 +13,6 @@ const Home = () => {
     setFlights(data);
   };
   
-  
-
     return ( 
         <>
           <Navbar />
