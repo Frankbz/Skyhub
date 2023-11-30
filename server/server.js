@@ -322,14 +322,13 @@ app.post('/api/flights/purchase_ticket', async (req, res) =>{
 */
 app.delete('/api/flights/delete_ticket', async (req, res) =>{
   const {email, ticket_ID} = req.body;
-  const query = 'DELETE FROM ticket WHERE ticket_ID = ? AND payment_email = ? AND departure_datetime > DATE_ADD(NOW(), INTERVAL 1 DAY)'
+  const query = 'DELETE FROM ticket WHERE ticket_ID = ? AND payment_email = ? AND departure_datetime > DATE_ADD(NOW(), INTERVAL 1 DAY)';
 
   db.query(query, [ticket_ID, email], (err, results) => {           
     if (err) {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
-    console.log(results.affectedRows);
     const rowsAffected = results.affectedRows;
     if (rowsAffected > 0)   
       res.json({ success: true, message: 'Successfully removed ticket'});
@@ -337,6 +336,60 @@ app.delete('/api/flights/delete_ticket', async (req, res) =>{
       res.json({ success: false, message: 'You can not refund tickets less than 24 hours before the flight'});
   })
 });
+
+/*  TRACK SPENDING
+    User passes in user's email, and optionally passes in a date range. Returns 3 columns - year, month, and monthly_sum.
+    JSON:
+    {
+      email:        string
+      start_date:   date (OPTIONAL, default = 6 months ago)
+      end_date:     date (OPTIONAL, default = CURR_DATE())
+    }
+
+*/
+app.post('/api/profile/get_spending', async (req,res) =>{
+  const {email, start_date, end_date} = req.body;
+  let values = [email];
+  let query = "SELECT YEAR(purchases_datetime) AS year, MONTH(purchases_datetime) AS month, SUM(ticket_price) AS monthly_sum \
+  FROM ticket WHERE payment_email = ? AND ";
+  if (start_date && end_date){
+    query += "purchases_datetime BETWEEN ? AND ?";
+    values.push(start_date, end_date);
+  }
+  else 
+    query += "purchases_datetime >= CURDATE() - INTERVAL 6 MONTH";
+  query += " GROUP BY YEAR(purchases_datetime), MONTH(purchases_datetime) ORDER BY YEAR(purchases_datetime) DESC, MONTH(purchases_datetime) DESC";
+
+  db.query(query, values, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    console.log(results);
+    res.json(results);
+  })
+
+});
+/*  CREATE COMMMENT
+    User passes in a ticket ID and the user's email. The ticket will be removed if the flight for the ticket is more than 24 hours away.
+    JSON:
+    {
+      email:     string
+      comment:   string (1000 chars MAX) 
+    }
+*/
+app.post('/api/comment/create', async (req, res) =>{
+  const {email, comment} = req.body;
+  const query = '';
+  db.query(query, [], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  })
+});
+
+
 
 // UNFINISHED
 // /*  Create New Flight
