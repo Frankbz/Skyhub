@@ -44,6 +44,7 @@ const Profile = () => {
         <>
         <Navbar />
         <div className="container">
+            <button style={{ position: 'fixed', buttom: '10px', right: '10px' }}>Add phones</button>
             <h3>Upcoming Flights</h3>
             {futureFlights.map((flightData) => (
             <Cell flightData={flightData} handleButtonClick={handleCancel} buttonName={"Cancel"} buttonShow={user && user.email !== null && user.email !== undefined}/>
@@ -52,6 +53,7 @@ const Profile = () => {
             {pastFlights.map((flightData) => (
             <Cell flightData={flightData} handleButtonClick={handleCancel} buttonName={"Cancel"} buttonShow={user && user.email !== null && user.email !== undefined}/>
             ))}
+            
             {/* <BarChart /> */}
         </div>
         </>

@@ -4,8 +4,9 @@
   padding: 20px;
   max-width: 800px;
   margin: 20px auto;
-  background-color: #f7f7f7;
+  background-color: #f8f9fa; /* Light background color */
   position: relative;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: Add a subtle box shadow */
 }
 
 .header-section {
@@ -17,12 +18,12 @@
 .airline-name {
   font-size: 1.5em;
   margin: 0;
-  color: #333;
+  color: darkorange; /* Bootstrap primary color */
 }
 
 .flight-id {
   margin: 0;
-  color: #333;
+  color: #6c757d; 
 }
 
 .top-right {
@@ -31,13 +32,13 @@
 }
 
 .plane-image {
-  width: 50px; /* Adjust the width as needed */
-  margin-left: 5px;
+  width: 50px; 
+  margin-left: 10px;
 }
 
 .seats {
   margin: 10px 0;
-  color: #333;
+  color: #495057; 
 }
 
 .route-info {
@@ -56,16 +57,17 @@
 .city-name,
 .airport-code {
   margin: 0;
-  color: #333;
+  color: #495057; /* Bootstrap gray-dark color */
 }
 
 .time-info {
   margin: 0;
-  color: #333;
+  color: #495057; /* Bootstrap gray-dark color */
 }
 
 .arrow {
   font-size: 1.5em;
+  color: #495057; /* Bootstrap gray-dark color */
 }
 
 .status-section {
@@ -74,7 +76,7 @@
 
 .status {
   margin: 0;
-  color: #333;
+  color: #495057; 
 }
 
 .checkout-button {
@@ -86,4 +88,3 @@
   bottom: 10px;
   right: 10px;
 }
-
