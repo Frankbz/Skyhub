@@ -349,6 +349,7 @@ app.delete('/api/flights/delete_ticket', async (req, res) =>{
 */
 app.post('/api/profile/get_spending', async (req,res) =>{
   const {email, start_date, end_date} = req.body;
+  console.log(req.body)
   let values = [email];
   let query = "SELECT YEAR(purchases_datetime) AS year, MONTH(purchases_datetime) AS month, SUM(ticket_price) AS monthly_sum \
   FROM ticket WHERE payment_email = ? AND ";
