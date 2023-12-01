@@ -1,16 +1,30 @@
-.container {
-    margin-top: 10px;
-    max-width: 99vh;
-
+.contain {
+    margin-top: 5px;
+    width: 100%;
+    
 }
 
-.titles {
+.title {
+    margin-top: 30px;
     display: flex;
     justify-content: space-between;
     align-items: center;
   }
   
 .word1 {
+    margin-left: 350px;
     font-size: 18pt;
     font-weight: 700
+}
+
+.word2 {
+    margin-right: 350px;
+    font-size: 18pt;
+}
+
+.bar{
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    max-height: 350px;
 }

@@ -74,6 +74,7 @@ const Spending = () => {
     return ( 
         <>
         <Navbar />
+        <button className="backButton" onClick={()=>{navigate("/profile")}}> Back </button>
         <div>
             <div className="box">
                 <h3>Spending Report</h3>

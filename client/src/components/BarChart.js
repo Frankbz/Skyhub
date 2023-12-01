@@ -42,11 +42,6 @@ const BarChart = ({from, to, spending}) => {
   const labels = generateLabels(from, to);
   const d = Array(labels.length).fill(0);
 
-  // Function to get the difference in months between two dates
-  const getMonthDiff = (dateFrom, dateTo) => {
-    return dateTo.getMonth() - dateFrom.getMonth() +
-      12 * (dateTo.getFullYear() - dateFrom.getFullYear());
-  };
 
   // Update data array based on spending values
   spending.forEach(({ month, monthly_sum, year }) => {
@@ -79,7 +74,7 @@ const BarChart = ({from, to, spending}) => {
       tooltip: {
           callbacks: {
               label: function (context) {
-                  return `Spending ${context.raw} dollars`;
+                  return `Spent ${context.raw} dollars`;
               },
           },
           displayColors: false,
@@ -90,11 +85,11 @@ const BarChart = ({from, to, spending}) => {
 
   return ( 
     <div className={styles.contain}>
-      <div className={styles.titles}>
-        <div className="word1">Total Spending: ${sum}</div>
-        <div className="word2">{from} - {to}</div>
+      <div className={styles.title}>
+        <div className={styles.word1}>Total Spending: ${sum}</div>
+        <div className={styles.word2}>{from} - {to}</div>
       </div>
-      <div className="bar">
+      <div className={styles.bar}>
         <Bar options={options} data={data} />
       </div>
     </div>
