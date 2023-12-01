@@ -1,0 +1,16 @@
+.container {
+    margin-top: 10px;
+    max-width: 99vh;
+
+}
+
+.titles {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+.word1 {
+    font-size: 18pt;
+    font-weight: 700
+}

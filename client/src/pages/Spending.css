@@ -1,0 +1,24 @@
+.box {
+    text-align: center;
+}
+
+.inputs {
+    display: flex;
+    justify-content: space-between;
+}
+
+.first {
+    margin-top: 30px;
+    margin-left: 400px;
+    margin-bottom: 15px;
+}
+
+.second {
+    margin-top: 30px;
+    margin-right: 400px;
+    margin-bottom: 15px;
+}
+
+h3 {
+    margin-top: 10px;
+}
