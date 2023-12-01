@@ -352,15 +352,24 @@ app.post('/api/profile/get_spending', async (req,res) =>{
   console.log(req.body)
   let values = [email];
   let query = "SELECT YEAR(purchases_datetime) AS year, MONTH(purchases_datetime) AS month, SUM(ticket_price) AS monthly_sum \
-  FROM ticket WHERE payment_email = ? AND ";
-  if (start_date && end_date){
-    query += "purchases_datetime BETWEEN ? AND ?";
-    values.push(start_date, end_date);
+  FROM ticket WHERE payment_email = ? AND purchases_datetime BETWEEN";
+  if (start_date){
+    query += " ? AND";
+    values.push(start_date);
+    console.log(start_date);
   }
   else 
-    query += "purchases_datetime >= CURDATE() - INTERVAL 6 MONTH";
-  query += " GROUP BY YEAR(purchases_datetime), MONTH(purchases_datetime) ORDER BY YEAR(purchases_datetime) DESC, MONTH(purchases_datetime) DESC";
+    query += " CURDATE() - INTERVAL 6 MONTH AND";
 
+  if (end_date){
+    query += " ?";
+    values.push(end_date);
+    console.log(end_date);
+  }
+  else
+    query += " NOW()";
+  
+  query += " GROUP BY YEAR(purchases_datetime), MONTH(purchases_datetime) ORDER BY YEAR(purchases_datetime) DESC, MONTH(purchases_datetime) DESC";
   db.query(query, values, (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
