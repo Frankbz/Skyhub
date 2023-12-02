@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import Modal from 'react-bootstrap/Modal';
+import Form from 'react-bootstrap/Form';
 
 import "./Navbar.css"
 
 const Navbar = () => {
     const [loggedIn, setLoggedIn] = useState(false);
     const [user, setUser] = useState({});
+    const [showModal, setShowModal] = useState(false);
+    const [phone, setPhone] = useState("")
 
     const navigate = useNavigate()
 
@@ -27,6 +31,29 @@ const Navbar = () => {
         navigate('/');
       };
 
+      const handleClick = () =>{
+        setShowModal(true);
+      }
+
+      const handleClose = () => {
+        setShowModal(false);
+      }
+
+      const handleAddPhone = async () => {
+        const response = await fetch('http://localhost:4000/api/profile/add_phone', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              email: user.email,
+              phone_number: phone,
+            })
+          })
+        
+        const json = await response.json();
+        
+        setShowModal(false);
+      }
+
     return ( 
         <div className="navbar">
         <div className="navbar-item">
@@ -34,7 +61,20 @@ const Navbar = () => {
             Skyhub
           </Link>
         </div>
-  
+        {
+          loggedIn ? (
+            user.type === "customer" ? (
+              <> 
+                <button onClick={handleClick}> Add phones</button>
+              </>
+            ) : (
+              //  add phone and emails for staff
+              <> </>
+            )
+          ) : (
+            <> </>
+          )
+        }
         {loggedIn ? (
           <>
             <div className="navbar-item">
@@ -55,6 +95,33 @@ const Navbar = () => {
             </Link>
           </div>
         )}
+        {/* Modal */}
+      <Modal show={showModal} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>Add Phone</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-2" >
+              <Form.Label>Phone Number</Form.Label>
+              <input
+                type="text"
+                onChange={(e)=> {setPhone(e.target.value)}}
+                value={phone}
+              />
+            </Form.Group>
+            
+          </Form>
+        </Modal.Body>
+      <Modal.Footer>
+        <button onClick={handleClose}>
+          Close
+        </button>
+        <button onClick={handleAddPhone}>
+          Add
+        </button>
+        </Modal.Footer>
+      </Modal>
       </div>
      );
 }

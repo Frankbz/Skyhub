@@ -23,7 +23,7 @@ const Profile = () => {
             const json = await response.json()
             if (response.ok){
                 console.log(json)
-                setFlights(json) // we have ticket ID here
+                setFlights(json) 
             }
     }}
 
