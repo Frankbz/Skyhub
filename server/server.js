@@ -273,11 +273,13 @@ app.put('/api/profile/update_info', async (req, res) =>{
 app.post('/api/flights/purchase_ticket', async (req, res) =>{
   const {email, flight_ID, departure_datetime, first_name, last_name, date_of_birth} = req.body;
   let values;
-  let price;
   //Gets the base price of the flight
-  const flightQuery = "SELECT base_price FROM flight WHERE flight_ID = ? AND departure_datetime = ?";
-  function executeQuery() {
+  function findTicketPrice() {
     return new Promise((resolve, reject) =>{
+      let price;
+      let seats;
+      let final_price;
+      const flightQuery = "SELECT base_price, num_of_seats FROM flight NATURAL JOIN flies NATURAL JOIN airplane WHERE flight_ID = ? AND departure_datetime = ?";
       db.query(flightQuery, [flight_ID, departure_datetime], (err, results) => {
         if (err) {
           console.error('Error executing query:', err);
@@ -289,15 +291,33 @@ app.post('/api/flights/purchase_ticket', async (req, res) =>{
           return res.status(500).json({ error: 'No Such Flight Found' });
         }
         price = results[0].base_price;
-        //console.log(price);
-        resolve(price);
+        seats = results[0].num_of_seats;
+        console.log(price);
+        console.log(seats);
+      });
+
+      const seatQuery = "SELECT count(*) as seats_taken FROM ticket WHERE flight_ID = ? AND departure_datetime = ?"
+      db.query(seatQuery, [flight_ID, departure_datetime], (err, results) => {
+        if (err) {
+          console.error('Error executing query:', err);
+          reject(err);
+          return res.status(500).json({ error: 'Internal Server Error' });
+        }
+        if (!results[0]){
+          console.error('No such flight found!');
+          return res.status(500).json({ error: 'No Such Flight Found' });
+        }
+        console.log(results[0].seats_taken);
+        final_price = (results[0].seats_taken/seats > 0.8) ? price * 1.25 : price;
+        console.log(final_price);
+        resolve(final_price);
       });
     });
   }
 
-  executeQuery() // run first query to find base_price
+  findTicketPrice() // run first query to find base_price
     .then((price)=> {
-      values = [flight_ID, departure_datetime, price*1.25, first_name, last_name, date_of_birth, email];
+      values = [flight_ID, departure_datetime, price, first_name, last_name, date_of_birth, email];
       const query = "INSERT INTO ticket VALUES (0, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
       //Second query to insert ticket with the correct values
@@ -379,22 +399,55 @@ app.post('/api/profile/get_spending', async (req,res) =>{
   })
 
 });
-/*  CREATE COMMMENT
-    User passes in a ticket ID and the user's email. The ticket will be removed if the flight for the ticket is more than 24 hours away.
+
+/*  CREATE COMMMENT AND RATING
+    User passes in the user's email, and either a comment, rating, or both. Creates a comment/rating pair with the comment and rating
     JSON:
     {
-      email:     string
-      comment:   string (1000 chars MAX) 
+      email:              string
+      flight_ID:          int
+      departure_datetime: datetime
+      comment:            string (1000 chars MAX)
+      rating:             int
     }
 */
 app.post('/api/comment/create', async (req, res) =>{
-  const {email, comment} = req.body;
-  const query = '';
-  db.query(query, [], (err, results) => {
+  const {email, flight_ID, departure_datetime, comment, rating} = req.body;
+  const commentSQL = 'INSERT INTO comment VALUES (?, ?, ?, ?)';
+  const ratingSQL = 'INSERT INTO rating VALUES (?, ?, ?, ?)';
+  db.query(commentSQL, [email, flight_ID, departure_datetime, comment], (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
+    res.json(results);
+  })
+  db.query(ratingSQL, [email, flight_ID, departure_datetime, rating], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    res.json(results);
+  })
+});
+
+/*  ADD PHONE NUMBER
+    User passes in the user's email, and a phone number. Stores the phone number in the database to the user.
+    JSON:
+    {
+      email:        string
+      phone_number: string
+    }
+*/
+app.post('/api/profile/add_phone', async (req, res) =>{
+  const {email, phone_number} = req.body;
+  const query = 'INSERT INTO customer_phone VALUES (?, ?)';
+  db.query(query, [email, phone_number], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    res.json(results);
   })
 });
 
