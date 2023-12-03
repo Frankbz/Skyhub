@@ -134,9 +134,13 @@ app.post('/api/user/login', async (req, res) => {
   });
 });
 
-/*  VIEW FLIGHTS
-    User optionally provides date range, start and destination airports. Returns the search results of all flights from the airline that match the criteria.
-    To check past flights, pass any value into the "past" parameter
+
+
+//////////////////////////////////////
+//CUSTOMER ROUTES
+
+/*  View Flights
+    User optionally provides date range, start and destination airports. Returns the search results of all flights from the airline that match the criteria. Flights must occur in the future
     JSON:
     {
       start_date_range: datetime, OPTIONAL
@@ -145,28 +149,22 @@ app.post('/api/user/login', async (req, res) => {
       dest_airport:     string,   OPTIONAL
       start_city:       string,   OPTIONAL
       dest_city:        string,   OPTIONAL
-      past:             string,   OPTIONAL
     }
 */
 app.post('/api/flights/view', async (req, res) => {
-  const { start_date_range, end_date_range, start_airport, dest_airport, start_city, dest_city, past} = req.body;
-  console.log(req.body)
-  let query = "SELECT flight_ID, departure_datetime, arrival_datetime, base_price, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, airline_name, num_of_seats \
+  const { start_date_range, end_date_range, start_airport, dest_airport, start_city, dest_city} = req.body;
+
+  let query = "SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, airline_name, num_of_seats, \
+  CASE WHEN remaining_seats/num_of_seats > 0.2 THEN base_price ELSE base_price*1.25 END AS base_price \
   FROM flight NATURAL JOIN flight_location JOIN Airport as A ON arrive_airport_code = A.airport_code JOIN Airport as B ON depart_airport_code = B.airport_code NATURAL JOIN flies NATURAL JOIN airplane\
-  WHERE departure_datetime";
+  WHERE departure_datetime > NOW() AND remaining_seats > 0 AND departure_datetime";
 
   //Array to dynamically hold values for the prepared statement
   const values = [];
   if (start_date_range && end_date_range)
     values.push(start_date_range, end_date_range);
-
-  //If query includes past (any value, as long as it exists in the query), return only flights that have already departed
-  if(past){
-    query += ' < NOW()';
-    //console.log("past");
-  }
   //If query contains date range, use query's date range, otherwise use now to +30 days
-  else if (start_date_range && end_date_range)
+  if (start_date_range && end_date_range)
     query += (start_date_range != end_date_range) ? (' BETWEEN ? AND ?') : (' BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY)');
   else
     query += ' BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)';
@@ -197,7 +195,7 @@ app.post('/api/flights/view', async (req, res) => {
   })
 });
 
-/*  GET TICKETS
+/*  Get Tickets
     User provides the user's email. Returns all tickets purchased by the user.
     JSON:
     {
@@ -273,67 +271,37 @@ app.put('/api/profile/update_info', async (req, res) =>{
 */
 app.post('/api/flights/purchase_ticket', async (req, res) =>{
   const {email, flight_ID, departure_datetime, first_name, last_name, date_of_birth} = req.body;
-  let values;
-  //Gets the base price of the flight
-  function findTicketPrice() {
-    return new Promise((resolve, reject) =>{
-      let price;
-      let seats;
-      let final_price;
-      const flightQuery = "SELECT base_price, num_of_seats FROM flight NATURAL JOIN flies NATURAL JOIN airplane WHERE flight_ID = ? AND departure_datetime = ?";
-      db.query(flightQuery, [flight_ID, departure_datetime], (err, results) => {
-        if (err) {
-          console.error('Error executing query:', err);
-          reject(err);
-          return res.status(500).json({ error: 'Internal Server Error' });
-        }
-        if (!results[0]){
-          console.error('No such flight found!');
-          return res.status(500).json({ error: 'No Such Flight Found' });
-        }
-        price = results[0].base_price;
-        seats = results[0].num_of_seats;
-        console.log(price);
-        console.log(seats);
-      });
+  const flightQuery = "SELECT CASE WHEN remaining_seats/num_of_seats > 0.2 THEN base_price ELSE base_price*1.25 END AS final_price FROM flight NATURAL JOIN flies NATURAL JOIN airplane WHERE flight_ID = ? AND departure_datetime = ?";
+  const newTicketQuery = "INSERT INTO ticket VALUES (0, ?, ?, ?, ?, ?, ?, ?, NOW())";
+  const updateSeatQuery = "UPDATE flight SET remaining_seats = remaining_seats-1 WHERE flight_ID = ? AND departure_datetime = ?";
 
-      const seatQuery = "SELECT count(*) as seats_taken FROM ticket WHERE flight_ID = ? AND departure_datetime = ?"
-      db.query(seatQuery, [flight_ID, departure_datetime], (err, results) => {
-        if (err) {
-          console.error('Error executing query:', err);
-          reject(err);
-          return res.status(500).json({ error: 'Internal Server Error' });
-        }
-        if (!results[0]){
-          console.error('No such flight found!');
-          return res.status(500).json({ error: 'No Such Flight Found' });
-        }
-        console.log(results[0].seats_taken);
-        final_price = (results[0].seats_taken/seats > 0.8) ? price * 1.25 : price;
-        console.log(final_price);
-        resolve(final_price);
-      });
-    });
-  }
+  const query = util.promisify(db.query).bind(db);
+  // Find base_price, remaining_seats and num_of_seats, use to calculate final price 
+  console.log(flightQuery);
+  const results1 = await query(flightQuery, [flight_ID, departure_datetime]);
+  console.log(results1);
 
-  findTicketPrice() // run first query to find base_price
-    .then((price)=> {
-      values = [flight_ID, departure_datetime, price, first_name, last_name, date_of_birth, email];
-      const query = "INSERT INTO ticket VALUES (0, ?, ?, ?, ?, ?, ?, ?, NOW())";
+  //Second query to insert ticket with the correct values
+  const values = [flight_ID, departure_datetime, results1[0].final_price, first_name, last_name, date_of_birth, email];
+  db.query(newTicketQuery, values, (err, results) => {           
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    console.log(results);
+    res.json(results);
+  })
 
-      //Second query to insert ticket with the correct values
-      db.query(query, values, (err, results) => {           
-        if (err) {
-          console.error('Error executing query:', err);
-          return res.status(500).json({ error: 'Internal Server Error' });
-        }
-        console.log(results);
-        res.json(results);
-      })
-    });
+  db.query(updateSeatQuery, [flight_ID, departure_datetime], (err, results) =>{
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  });
+
 });
 
-/*  DELETE TICKET
+/*  Delete Ticket
     User passes in a ticket ID and the user's email. The ticket will be removed if the flight for the ticket is more than 24 hours away.
     JSON:
     {
@@ -343,9 +311,27 @@ app.post('/api/flights/purchase_ticket', async (req, res) =>{
 */
 app.delete('/api/flights/delete_ticket', async (req, res) =>{
   const {email, ticket_ID} = req.body;
-  const query = 'DELETE FROM ticket WHERE ticket_ID = ? AND payment_email = ? AND departure_datetime > DATE_ADD(NOW(), INTERVAL 1 DAY)';
+  const getFlightQuery = "SELECT flight_ID, departure_datetime FROM flight NATURAL JOIN ticket WHERE ticket_ID = ? AND departure_datetime > DATE_ADD(NOW(), INTERVAL 1 DAY)";
+  const delTicketQuery = "DELETE FROM ticket WHERE ticket_ID = ? AND payment_email = ? AND departure_datetime > DATE_ADD(NOW(), INTERVAL 1 DAY)";
+  const updateSeatQuery = "UPDATE flight SET remaining_seats = remaining_seats+1 WHERE flight_ID = ? AND departure_datetime = ?";
 
-  db.query(query, [ticket_ID, email], (err, results) => {           
+  const query = util.promisify(db.query).bind(db);
+  
+  // Gets flight details from the ticket information
+  const results1 = await query(getFlightQuery, [ticket_ID]);
+
+  // Uses flight details to increase available seats on the flight by 1 (if the ticket can be removed)
+  if (results1){
+    db.query(updateSeatQuery, [results1[0].flight_ID, results1[0].departure_datetime], (err, results) => {           
+      if (err) {
+        console.error('Error executing query:', err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+    })
+  }
+
+  // Deletes the ticket from the database
+  db.query(delTicketQuery, [ticket_ID, email], (err, results) => {           
     if (err) {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
@@ -358,7 +344,7 @@ app.delete('/api/flights/delete_ticket', async (req, res) =>{
   })
 });
 
-/*  TRACK SPENDING
+/*  Track Spending
     User passes in user's email, and optionally passes in a date range. Returns 3 columns - year, month, and monthly_sum.
     JSON:
     {
@@ -401,7 +387,7 @@ app.post('/api/profile/get_spending', async (req,res) =>{
 
 });
 
-/*  CREATE COMMMENT AND RATING
+/*  Create Comment and Rating
     User passes in the user's email, a rating, and optionally a comment, as well as the flight ID and flight departure datetime of the flight being rated/commented on. 
     Creates a rating and comment in the database under said flight.
     JSON:
@@ -422,6 +408,7 @@ app.post('/api/comment/create', async (req, res) =>{
   const query = util.promisify(db.query).bind(db);
 
 
+  // Check if the rating already exists - if so, update it, if not, create a new one
   const results1 = await query(checkRateSQL, [email, flight_ID, departure_datetime]);
   if(results1)
     ratingSQL = 'UPDATE rating SET rating = ? WHERE email = ? AND flight_ID = ? AND departure_datetime = ?';
@@ -436,6 +423,7 @@ app.post('/api/comment/create', async (req, res) =>{
     res.json(results);
   });
 
+  // Check if the comment already exists - if so, update it, if not, create a new one
   if (comment){
     const results2 = await query(checkCommentSQL, [email, flight_ID, departure_datetime]);
     if (results2)
@@ -452,7 +440,7 @@ app.post('/api/comment/create', async (req, res) =>{
   }
 });
 
-/*  ADD PHONE NUMBER
+/*  Add Phone Number
     User passes in the user's email, and a phone number. Stores the phone number in the database to the user.
     JSON:
     {
@@ -475,40 +463,115 @@ app.post('/api/profile/add_phone', async (req, res) =>{
 
 
 
+//////////////////////////////////////
+//AIRLINE STAFF ROUTES
+
+/*  View Airline Flights
+    User provides their airline, and optionally a range of dates, src/dst airports, src/dst cities. Provides all flights matching the criteria, and a list of all customers for each flight.
+    Default date range is current time to next 30 days
+    JSON:
+    {
+      airline_name:     string
+      start_date_range: datetime, OPTIONAL
+      end_date_range:   datetime, OPTIONAL
+      start_airport:    string,   OPTIONAL
+      dest_airport:     string,   OPTIONAL
+      start_city:       string,   OPTIONAL
+      dest_city:        string,   OPTIONAL
+    }
+    TODO: Include customer view
+*/
+app.post('/api/staff/view_flights', async (req, res) =>{
+  const {airline_name, start_date_range, end_date_range, start_airport, dest_airport, start_city, dest_city} = req.body;
+
+  let query = "SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, airline_name, num_of_seats, \
+  CASE WHEN remaining_seats/num_of_seats > 0.2 THEN base_price ELSE base_price*1.25 END AS base_price \
+  FROM flight NATURAL JOIN flight_location JOIN Airport as A ON arrive_airport_code = A.airport_code JOIN Airport as B ON depart_airport_code = B.airport_code NATURAL JOIN flies NATURAL JOIN airplane\
+  WHERE airline_name = ? AND departure_datetime";
+
+  //Array to dynamically hold values for the prepared statement
+  const values = [airline_name];
+  if (start_date_range && end_date_range)
+    values.push(start_date_range, end_date_range);
+  //If query contains date range, use query's date range, otherwise use now to +30 days
+  if (start_date_range && end_date_range)
+    query += (start_date_range != end_date_range) ? (' BETWEEN ? AND ?') : (' BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY)');
+  else
+    query += ' BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)';
+
+  //Checks start/dest airport and city if passed in
+  if (start_airport){
+    query += ' AND depart_airport_code = ?';
+    values.push(start_airport);}
+  if (dest_airport){
+    query += ' AND arrive_airport_code = ?';
+    values.push(dest_airport);}
+  if (start_city){
+    query += ' AND B.city = ?';
+    values.push(start_city);}
+  if (dest_city){
+    query += ' AND A.city = ?';
+    values.push(dest_city);}
+
+  //console.log(query);
+
+  db.query(query, values, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    //console.log(results);
+    res.json(results);
+  })
+});
+
+
 /*  Create New Flight
     User provides information for a new flight, a new flight is created under the user's airline
+    Airplane used for the flight must NOT coincide with any maintenance periods for said airplane
     JSON FORMAT
     {
+      airline_name:         string
       departure_datetime:   datetime
       arrival_datetime:     datetime
       start_airport:        string
       dest_airport:         string
       base_price:           float
+      airplane_ID:          int
     }
-    TODO set flight_ID to AUTO_INCREMENT in the database column?, and check that airplane being used is of the correct airline
+    TODO: check maintenance conflicts
 */
-app.post('/api/flights/create', (req, res) => {
+app.post('/api/flights/create', async (req, res) => {
   console.log('entered flights route');
-  const{ departure_datetime, arrival_datetime, start_airport, dest_airport, base_price, airplane_ID} = req.body;
+  const{ airline_name, departure_datetime, arrival_datetime, start_airport, dest_airport, base_price, airplane_ID} = req.body;
+  //Intermediate query - find number of seats
+  const findSeatSQL = 'SELECT num_of_seats FROM Airplane WHERE airline_name = ? AND airplane_ID = ?';
+
   //flight_ID is auto generated, flight_status always 'on-time'
-  const flightSQL = 'INSERT INTO flight (flight_ID, departure_datetime, arrival_datetime, base_price, flight_status) VALUES (0, ?, ?, ?, "on-time")';
-  const locationSQL = 'INSERT INTO flight_location (flight_ID, departure_datetime, start_airport_code, dest_airport_code) VALUES (?, ?, ?, ?)';
-  const airplaneSQL = 'INSERT INTO flies (flight_ID, departure_datetime, airplane_ID) VALUES (?, ?, ?)';
+  const flightSQL = 'INSERT INTO flight (flight_ID, departure_datetime, arrival_datetime, base_price, remaining_seats, flight_status) VALUES (0, ?, ?, ?, ?, "on-time")';
+  const locationSQL = 'INSERT INTO flight_location (flight_ID, departure_datetime, depart_airport_code, arrive_airport_code) VALUES (LAST_INSERT_ID(), ?, ?, ?)';
+  const airplaneSQL = 'INSERT INTO flies (flight_ID, departure_datetime, airplane_ID, airline_name) VALUES (LAST_INSERT_ID(), ?, ?, ?)';
+
+  const query = util.promisify(db.query).bind(db);
+  
+  const results1 = await query(findSeatSQL, [airline_name, airplane_ID]);
 
   //Insert into flight table
-  db.query(flightSQL, [flight_ID, departure_datetime, arrival_datetime, base_price, airplane_ID], (err, results) => {
+  db.query(flightSQL, [departure_datetime, arrival_datetime, base_price, results1[0].num_of_seats], (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   })
-  db.query(locationSQL, [flight_ID, departure_datetime, start_airport, dest_airport], (err, results) => {
+  //Insert into flight_location table
+  db.query(locationSQL, [departure_datetime, start_airport, dest_airport], (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   })
-  db.query(airplaneSQL, [flight_ID, departure_datetime, airplane_ID], (err, results) => {
+  //Insert into flies table
+  db.query(airplaneSQL, [departure_datetime, airplane_ID, airline_name], (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
@@ -518,7 +581,13 @@ app.post('/api/flights/create', (req, res) => {
 });
 
 /*  Change Flight Status
-    User provides a flight_ID & departure datetime, and the flight status to be updated to
+    User provides a flight_ID & departure datetime, and the flight status to be updated to.
+    JSON:
+    {
+      flight_ID:            int
+      departure_datetime:   datetime
+      flight_status:        string
+    }
 */
 app.patch('/api/flights/change_status', (req, res) => {
   const { flight_ID, departure_datetime, flight_status } = req.body;
@@ -533,7 +602,31 @@ app.patch('/api/flights/change_status', (req, res) => {
   })
 });
 
-// Log server massage
+// Log server message
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on port ${process.env.PORT}`);
+});
+
+/*  Add Airplane
+    User provides airline_name, number of seats, manufacturing company, model number, and age. Inserts the plane into the database.
+    JSON:
+    {
+      airline_name:         string
+      num_of_seats:      int
+      manufacturing_company:string
+      model_number:         string
+      age:                  int  
+    }
+    TODO: change DB to auto increment ID (FIX DUPLICATE IDS)
+*/
+app.post('/api/staff/add_plane', async (req, res) =>{
+  const {airline_name, num_of_seats, manufacturing_company, model_number, age} = req.body;
+  const query = 'INSERT INTO airplane (airplane_ID, num_of_seats, manufacturing_company, model_number, age, airline_name) VALUES (0, ?, ?, ?, ?, ?)'; // ID IS TEMPORARILY 0 - WILL ONLY WORK ONCE BEFORE DUPLICATE VALUE CONFLICT
+  db.query(query, [num_of_seats, manufacturing_company, model_number, age, airline_name], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    res.json(results);
+  })
 });
