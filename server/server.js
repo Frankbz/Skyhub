@@ -5,6 +5,7 @@ const mysql = require('mysql');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const util = require('util');
 
 const app = express();
 
@@ -144,7 +145,7 @@ app.post('/api/user/login', async (req, res) => {
       dest_airport:     string,   OPTIONAL
       start_city:       string,   OPTIONAL
       dest_city:        string,   OPTIONAL
-      past:             string,     OPTIONAL
+      past:             string,   OPTIONAL
     }
 */
 app.post('/api/flights/view', async (req, res) => {
@@ -401,34 +402,54 @@ app.post('/api/profile/get_spending', async (req,res) =>{
 });
 
 /*  CREATE COMMMENT AND RATING
-    User passes in the user's email, and either a comment, rating, or both. Creates a comment/rating pair with the comment and rating
+    User passes in the user's email, a rating, and optionally a comment, as well as the flight ID and flight departure datetime of the flight being rated/commented on. 
+    Creates a rating and comment in the database under said flight.
     JSON:
     {
       email:              string
       flight_ID:          int
       departure_datetime: datetime
-      comment:            string (1000 chars MAX)
+      comment:            string (1000 chars MAX) OPTIONAL
       rating:             int
     }
 */
 app.post('/api/comment/create', async (req, res) =>{
   const {email, flight_ID, departure_datetime, comment, rating} = req.body;
-  const commentSQL = 'INSERT INTO comment VALUES (?, ?, ?, ?)';
-  const ratingSQL = 'INSERT INTO rating VALUES (?, ?, ?, ?)';
-  db.query(commentSQL, [email, flight_ID, departure_datetime, comment], (err, results) => {
+  let commentSQL;
+  let ratingSQL;
+  const checkRateSQL = 'SELECT * FROM rating WHERE email = ? AND flight_ID = ? AND  departure_datetime = ?';
+  const checkCommentSQL = 'SELECT * FROM rating WHERE email = ? AND flight_ID = ? AND  departure_datetime = ?';
+  const query = util.promisify(db.query).bind(db);
+
+
+  const results1 = await query(checkRateSQL, [email, flight_ID, departure_datetime]);
+  if(results1)
+    ratingSQL = 'UPDATE rating SET rating = ? WHERE email = ? AND flight_ID = ? AND departure_datetime = ?';
+  else
+    ratingSQL = 'INSERT INTO rating COLUMNS (rating, email, flight_ID, departure_datetime) VALUES (?, ?, ?, ?)';
+
+  db.query(ratingSQL, [rating, email, flight_ID, departure_datetime], (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
     res.json(results);
-  })
-  db.query(ratingSQL, [email, flight_ID, departure_datetime, rating], (err, results) => {
-    if (err) {
-      console.error('Error executing query:', err);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-    res.json(results);
-  })
+  });
+
+  if (comment){
+    const results2 = await query(checkCommentSQL, [email, flight_ID, departure_datetime]);
+    if (results2)
+      commentSQL = 'UPDATE comment SET comment = ? WHERE email = ? AND flight_ID = ? AND departure_datetime = ?';
+    else
+      commentSQL = 'INSERT INTO comment COLUMNS (comment, email, flight_ID, departure_datetime) VALUES (?, ?, ?, ?)';
+
+    db.query(commentSQL, [comment, email, flight_ID, departure_datetime], (err, results) => {
+      if (err) {
+        console.error('Error executing query:', err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+    });
+  }
 });
 
 /*  ADD PHONE NUMBER
@@ -453,66 +474,64 @@ app.post('/api/profile/add_phone', async (req, res) =>{
 
 
 
-// UNFINISHED
-// /*  Create New Flight
-//     User provides information for a new flight, a new flight is created under the user's airline
-//     JSON FORMAT
-//     {
-//       departure_datetime:   datetime
-//       arrival_datetime:     datetime
-//       start_airport:        string
-//       dest_airport:         string
-//       base_price:           float
-//       airplane_ID:          int
-//     }
-//     TODO set flight_ID to AUTO_INCREMENT in the database column?, and check that airplane being used is of the correct airline
-// */
-// app.post('/api/flights/create', (req, res) => {
-//   console.log('entered flights route');
-//   const{ departure_datetime, arrival_datetime, start_airport, dest_airport, base_price, airplane_ID} = req.body;
-//   //flight_ID is auto generated, flight_status always 'on-time'
-//   const flight_ID = 123; const status = 'on-time';  
-//   const flightSQL = 'INSERT INTO flight (flight_ID, departure_datetime, arrival_datetime, base_price, flight_status) VALUES (?, ?, ?, ?, ?)';
-//   const locationSQL = 'INSERT INTO flight_location (flight_ID, departure_datetime, start_airport_code, dest_airport_code) VALUES (?, ?, ?, ?)';
-//   const airplaneSQL = 'INSERT INTO flies (flight_ID, departure_datetime, airplane_ID) VALUES (?, ?, ?)';
 
-//   //Insert into flight table
-//   db.query(flightSQL, [flight_ID, departure_datetime, arrival_datetime, base_price, airplane_ID], (err, results) => {
-//     if (err) {
-//       console.error('Error executing query:', err);
-//       return res.status(500).json({ error: 'Internal Server Error' });
-//     }
-//   })
-//   db.query(locationSQL, [flight_ID, departure_datetime, start_airport, dest_airport], (err, results) => {
-//     if (err) {
-//       console.error('Error executing query:', err);
-//       return res.status(500).json({ error: 'Internal Server Error' });
-//     }
-//   })
-//   db.query(airplaneSQL, [flight_ID, departure_datetime, airplane_ID], (err, results) => {
-//     if (err) {
-//       console.error('Error executing query:', err);
-//       return res.status(500).json({ error: 'Internal Server Error' });
-//     }
-//   })
-//   res.send("Successfully created flight");
-// });
+/*  Create New Flight
+    User provides information for a new flight, a new flight is created under the user's airline
+    JSON FORMAT
+    {
+      departure_datetime:   datetime
+      arrival_datetime:     datetime
+      start_airport:        string
+      dest_airport:         string
+      base_price:           float
+    }
+    TODO set flight_ID to AUTO_INCREMENT in the database column?, and check that airplane being used is of the correct airline
+*/
+app.post('/api/flights/create', (req, res) => {
+  console.log('entered flights route');
+  const{ departure_datetime, arrival_datetime, start_airport, dest_airport, base_price, airplane_ID} = req.body;
+  //flight_ID is auto generated, flight_status always 'on-time'
+  const flightSQL = 'INSERT INTO flight (flight_ID, departure_datetime, arrival_datetime, base_price, flight_status) VALUES (0, ?, ?, ?, "on-time")';
+  const locationSQL = 'INSERT INTO flight_location (flight_ID, departure_datetime, start_airport_code, dest_airport_code) VALUES (?, ?, ?, ?)';
+  const airplaneSQL = 'INSERT INTO flies (flight_ID, departure_datetime, airplane_ID) VALUES (?, ?, ?)';
 
-// /*  Change Flight Status
-//     User provides a flight_ID & departure datetime, and the flight status to be updated to
-// */
-// app.patch('/api/flights/change_status', (req, res) => {
-//   const { flight_ID, departure_datetime, flight_status } = req.body;
+  //Insert into flight table
+  db.query(flightSQL, [flight_ID, departure_datetime, arrival_datetime, base_price, airplane_ID], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  })
+  db.query(locationSQL, [flight_ID, departure_datetime, start_airport, dest_airport], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  })
+  db.query(airplaneSQL, [flight_ID, departure_datetime, airplane_ID], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  })
+  res.send("Successfully created flight");
+});
 
-//   sql = 'UPDATE flight SET flight_status = ? WHERE flight_ID = ?, departure_datetime = ?';
-//   db.query(sql, [flight_status, flight_ID, departure_datetime], (err, results) => {
-//     if (err) {
-//       console.error('Error executing query:', err);
-//       return res.status(500).json({ error: 'Internal Server Error' });
-//     }
-//     res.send("Successfully updated flight status");
-//   })
-// });
+/*  Change Flight Status
+    User provides a flight_ID & departure datetime, and the flight status to be updated to
+*/
+app.patch('/api/flights/change_status', (req, res) => {
+  const { flight_ID, departure_datetime, flight_status } = req.body;
+
+  sql = 'UPDATE flight SET flight_status = ? WHERE flight_ID = ?, departure_datetime = ?';
+  db.query(sql, [flight_status, flight_ID, departure_datetime], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    res.send("Successfully updated flight status");
+  })
+});
 
 // Log server massage
 app.listen(process.env.PORT, () => {
