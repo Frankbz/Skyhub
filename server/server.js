@@ -467,7 +467,7 @@ app.post('/api/profile/add_phone', async (req, res) =>{
 //AIRLINE STAFF ROUTES
 
 /*  View Airline Flights
-    User provides their airline, and optionally a range of dates, src/dst airports, src/dst cities. Provides all flights matching the criteria, and a list of all customers for each flight.
+    User provides their airline, and optionally a range of dates, src/dst airports, src/dst cities. Provides all flights matching the criteria.
     Default date range is current time to next 30 days
     JSON:
     {
@@ -479,7 +479,6 @@ app.post('/api/profile/add_phone', async (req, res) =>{
       start_city:       string,   OPTIONAL
       dest_city:        string,   OPTIONAL
     }
-    TODO: Include customer view
 */
 app.post('/api/staff/view_flights', async (req, res) =>{
   const {airline_name, start_date_range, end_date_range, start_airport, dest_airport, start_city, dest_city} = req.body;
@@ -612,7 +611,7 @@ app.listen(process.env.PORT, () => {
     JSON:
     {
       airline_name:         string
-      num_of_seats:      int
+      num_of_seats:         int
       manufacturing_company:string
       model_number:         string
       age:                  int  
@@ -623,6 +622,92 @@ app.post('/api/staff/add_plane', async (req, res) =>{
   const {airline_name, num_of_seats, manufacturing_company, model_number, age} = req.body;
   const query = 'INSERT INTO airplane (airplane_ID, num_of_seats, manufacturing_company, model_number, age, airline_name) VALUES (0, ?, ?, ?, ?, ?)'; // ID IS TEMPORARILY 0 - WILL ONLY WORK ONCE BEFORE DUPLICATE VALUE CONFLICT
   db.query(query, [num_of_seats, manufacturing_company, model_number, age, airline_name], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    res.json(results);
+  })
+});
+
+/*  Add Staff Phone Number
+    User passes in the user's airline_name, username, and a phone number. Stores the phone number in the database to the user.
+    JSON:
+    {
+      airline_name: string
+      username:     string
+      phone_number: string
+    }
+*/
+app.post('/api/staff/add_phone', async (req, res) =>{
+  const {airline_name, username, phone_number} = req.body;
+  const query = 'INSERT INTO staff_phone VALUES (?, ?, ?)';
+  db.query(query, [username, airline_name, phone_number], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    res.json(results);
+  })
+});
+
+/*  Add Staff Email
+    User passes in the user's airline_name, username, and an email. Stores the email in the database to the user.
+    JSON:
+    {
+      airline_name: string
+      username:     string
+      email:        string
+    }
+*/
+app.post('/api/staff/add_email', async (req, res) =>{
+  const {airline_name, username, email} = req.body;
+  const query = 'INSERT INTO staff_email VALUES (?, ?, ?)';
+  db.query(query, [username, airline_name, email], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    res.json(results);
+  })
+});
+
+/*  Add Airport
+    User passes in all details of an airport. The airport is stored in the database.
+    JSON:
+    {
+      airport_code:   string(len=3)
+      name:           string
+      city:           string
+      country:        string
+      num_of_terminals:int
+      airport_type:   string
+    }
+*/
+app.post('/api/staff/add_airport', async (req, res) =>{
+  const {airport_code, name, city, country, num_of_terminals, airport_type} = req.body;
+  const query = 'INSERT INTO airport VALUES (?, ?, ?, ?, ?, ?)';
+  db.query(query, [airport_code, name, city, country, num_of_terminals, airport_type], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    res.json(results);
+  })
+});
+
+/*  View Ratings
+    User passes in a flight_ID and departure_datetime. Returns a list of ratings and corresponding comments from customers for that flight, along with their account emails.
+    JSON:
+    {
+      flight_ID:          int
+      departure_datetime: datetime
+    }
+*/
+app.post('/api/staff/view_ratings', async (req, res) =>{
+  const {flight_ID, departure_datetime} = req.body;
+  const query = 'SELECT email, rating, comment FROM rating NATURAL JOIN comment WHERE flight_ID = ? AND departure_datetime = ?';
+  db.query(query, [flight_ID, departure_datetime], (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
