@@ -12,6 +12,7 @@ const Home = () => {
   const handleFlights = (data) => {
     setFlights(data);
   };
+  console.log(flights)
 
     return ( 
         <>

@@ -35,6 +35,7 @@ const Cell = ({ flightData, handleButtonClick, buttonName, buttonShow }) => {
       </div>
       <div className="status-section">
         <p className="status">Status: {flightData.flight_status}</p>
+        <p className="price">Price: ${flightData.base_price}</p>
       </div>
       {buttonShow ? <button onClick={handleButtonClick} className="checkout-button">{buttonName}</button> : <></>}
     </div>
