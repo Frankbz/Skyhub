@@ -52,7 +52,7 @@ const FlightSearch = ({handleFlights}) => {
             <form className="flight-search" onSubmit={handleSearch}>
               <div className={styles.formRow}>
                 <div className="form-group">
-                  <label htmlFor="sourceCity">From</label>
+                  <label >From</label>
                   <input
                     type="text"
                     placeholder='eg. New York'
@@ -63,7 +63,7 @@ const FlightSearch = ({handleFlights}) => {
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="destinationCity">To</label>
+                  <label >To</label>
                   <input
                     type="text"
                     placeholder='eg. Shanghai'
@@ -74,7 +74,7 @@ const FlightSearch = ({handleFlights}) => {
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="departureDate">Departure Date</label>
+                  <label >Departure Date</label>
                   <input
                     type="date"
                     id="departureDate"

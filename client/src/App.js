@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Profile from './pages/Profile'
 import StaffSignup from './pages/StaffSignup'
 import Spending from './pages/Spending';
+import Manage from './pages/Manage';
 
 function App() {
   const user = JSON.parse(localStorage.getItem('user'));
@@ -23,6 +24,7 @@ function App() {
             <Route path='/profile' element= {<Profile />} ></Route>
             <Route path='/staffsignup' element= {<StaffSignup />} ></Route>
             <Route path='/spending' element= {<Spending />} ></Route>
+            <Route path='/manage' element= {<Manage />} ></Route>
           </Routes>
         </div>
       </BrowserRouter>
