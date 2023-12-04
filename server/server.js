@@ -35,6 +35,7 @@ app.post('/api/user/signup', async (req, res) => {
   const {email, password} = req.body;
 
   const type = "customer"
+  const airline_name = null
 
   // Hash the password
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -48,7 +49,7 @@ app.post('/api/user/signup', async (req, res) => {
 
     const token = jwt.sign({email}, process.env.SECRET, { expiresIn: '1h' });
 
-    res.status(200).json({type, email, token});
+    res.status(200).json({type, email, token, airline_name});
   })
 })
 
@@ -57,6 +58,7 @@ app.post('/api/user/staff_signup', async (req, res) => {
   const { firstname, lastname, airline, email, password } = req.body;
 
   const type = "staff"
+  const airline_name = airline;
 
   // Check if the airline exists
   const checkAirlineQuery = 'SELECT airline_name FROM airline WHERE airline_name = ?';
@@ -84,7 +86,7 @@ app.post('/api/user/staff_signup', async (req, res) => {
 
       const token = jwt.sign({ email }, process.env.SECRET, { expiresIn: '1h' });
 
-      res.status(200).json({ type, email, token });
+      res.status(200).json({ type, email, token, airline_name });
     });
   });
 });
@@ -96,42 +98,63 @@ app.post('/api/user/login', async (req, res) => {
 
   let tableName;
   let columnName;
+  let airline_name;
 
-  if (type === "staff"){
+  if (type === "staff") {
     tableName = "airline_staff";
-    columnName = "username"
+    columnName = "username"; 
+    // Fetch airline_name from airline_staff where email and password match
+    const fetchAirlineQuery = `SELECT * FROM ${tableName} WHERE ${columnName} = ?`;
+    db.query(fetchAirlineQuery, [email, password], (error, airlineResults) => {
+      if (error) {
+        console.error('Error fetching airline_name:', error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+      // Check if the user with the provided email and password exists
+      if (airlineResults.length === 0) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+      airline_name = airlineResults[0].airline_name;
+
+      // Continue with the rest of the login logic
+      continueLogin();
+    });
+  } else {
+    tableName = "customer";
+    columnName = "email";
+    airline_name = null;
+    // Continue with the rest of the login logic
+    continueLogin();
   }
-  else{
-    tableName = "customer"
-    columnName = "email"
+
+  function continueLogin() {
+    // Check if the user exists
+    const checkUserQuery = `SELECT * FROM ${tableName} WHERE ${columnName} = ?`;
+    db.query(checkUserQuery, [email], async (error, results) => {
+      if (error) {
+        console.error('Error executing query:', error);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+
+      // Check if the user with the provided email exists
+      if (results.length === 0) {
+        return res.status(401).json({ error: 'Email not registered. Please sign up first.' });
+      }
+
+      // Compare the provided password with the hashed password in the database
+      const user = results[0];
+      const passwordMatch = await bcrypt.compare(password, user.password);
+
+      if (!passwordMatch) {
+        return res.status(401).json({ error: 'Password is incorrect' });
+      }
+
+      // If the credentials are valid, generate a JWT
+      const token = jwt.sign({ email }, process.env.SECRET, { expiresIn: '1h' });
+
+      res.status(200).json({ type, email, token, airline_name });
+    });
   }
-  console.log(type, tableName, columnName)
-  // Check if the user exists
-  const checkUserQuery = `SELECT * FROM ${tableName} WHERE ${columnName} = ?`;
-  db.query(checkUserQuery, [email], async (error, results) => {
-    if (error) {
-      console.error('Error executing query:', error);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-
-    // Check if the user with the provided email exists
-    if (results.length === 0) {
-      return res.status(401).json({ error: ' Email not registered. Please sign up first.' });
-    }
-
-    // Compare the provided password with the hashed password in the database
-    const user = results[0];
-    const passwordMatch = await bcrypt.compare(password, user.password);
-
-    if (!passwordMatch) {
-      return res.status(401).json({ error: 'Password is incorrect' });
-    }
-
-    // If the credentials are valid, generate a JWT
-    const token = jwt.sign({ email }, process.env.SECRET, { expiresIn: '1h' });
-
-    res.status(200).json({ type, email, token });
-  });
 });
 
 
@@ -597,9 +620,11 @@ app.patch('/api/flights/change_status', (req, res) => {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
-    res.send("Successfully updated flight status");
+    res.json(results);
   })
 });
+
+
 
 /*  Add Airplane
     User provides airline_name, number of seats, manufacturing company, model number, and age. Inserts the plane into the database.

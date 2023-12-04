@@ -40,7 +40,7 @@ const Profile = () => {
             body: JSON.stringify({ email: user.email, ticket_ID: ticket_ID })
         })
         const json = await response.json()
-        console.log("json", json)
+        // console.log("json", json)
 
         window.location.reload()
     }
@@ -71,7 +71,7 @@ const Profile = () => {
               departure_datetime: formattedDate,
               comment: comment,
               rating: Number(rating)
-                })
+              })
             })
             const json = await response.json();
             console.log(json)
