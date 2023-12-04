@@ -547,6 +547,27 @@ app.post('/api/staff/view_flights', async (req, res) =>{
   })
 });
 
+/*  View flight customers
+    User provides flight_ID and departure_datetime of a flight. Returns all customers of said flight.
+    JSON:
+    {
+      flight_ID:          int
+      departure_datetime: datetime
+    }
+*/
+app.post('/api/flights/view_customers', async (req, res)=>{
+  const {flight_ID, departure_datetime} = req.body;
+  query = "SELECT * FROM ticket WHERE flight_ID = ? AND departure_datetime = ?"
+  db.query(query, values, (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    //console.log(results);
+    res.json(results);
+  })
+});
+
 
 /*  Create New Flight
     User provides information for a new flight, a new flight is created under the user's airline
@@ -599,7 +620,7 @@ app.post('/api/flights/create', async (req, res) => {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   })
-  res.send("Successfully created flight");
+  res.json({success: true, message: "successfully created flight"});
 });
 
 /*  Change Flight Status
@@ -623,8 +644,6 @@ app.patch('/api/flights/change_status', (req, res) => {
     res.json(results);
   })
 });
-
-
 
 /*  Add Airplane
     User provides airline_name, number of seats, manufacturing company, model number, and age. Inserts the plane into the database.
@@ -650,46 +669,38 @@ app.post('/api/staff/add_plane', async (req, res) =>{
   })
 });
 
-/*  Add Staff Phone Number
-    User passes in the user's airline_name, username, and a phone number. Stores the phone number in the database to the user.
+/*  Add Staff Email and/or Number
+    User passes in the user's airline_name, username, and optionally a phone number and/or email. Stores the phone number/email in the database to the user.
     JSON:
     {
       airline_name: string
       username:     string
       phone_number: string
-    }
-*/
-app.post('/api/staff/add_phone', async (req, res) =>{
-  const {airline_name, username, phone_number} = req.body;
-  const query = 'INSERT INTO staff_phone VALUES (?, ?, ?)';
-  db.query(query, [username, airline_name, phone_number], (err, results) => {
-    if (err) {
-      console.error('Error executing query:', err);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-    res.json(results);
-  })
-});
-
-/*  Add Staff Email
-    User passes in the user's airline_name, username, and an email. Stores the email in the database to the user.
-    JSON:
-    {
-      airline_name: string
-      username:     string
       email:        string
     }
 */
-app.post('/api/staff/add_email', async (req, res) =>{
-  const {airline_name, username, email} = req.body;
-  const query = 'INSERT INTO staff_email VALUES (?, ?, ?)';
-  db.query(query, [username, airline_name, email], (err, results) => {
-    if (err) {
-      console.error('Error executing query:', err);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-    res.json(results);
-  })
+app.post('/api/staff/add_phone_email', async (req, res) =>{
+  const {airline_name, username, phone_number, email} = req.body;
+  if (phone_number){
+    const phonequery = 'INSERT INTO staff_phone VALUES (?, ?, ?)';
+    db.query(phonequery, [username, airline_name, phone_number], (err, results) => {
+      if (err) {
+        console.error('Error executing query:', err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+    });
+  }
+
+  if (email){
+    const emailquery = 'INSERT INTO staff_email VALUES (?, ?, ?)';
+    db.query(emailquery, [username, airline_name, email], (err, results) => {
+      if (err) {
+        console.error('Error executing query:', err);
+        return res.status(500).json({ error: 'Internal Server Error' });
+      }
+    });
+  }
+  res.json({success: true, message: "successfully added phone number/"});
 });
 
 /*  Add Airport
@@ -735,6 +746,72 @@ app.post('/api/staff/view_ratings', async (req, res) =>{
     res.json(results);
   })
 });
+
+/*  Schedule Maintenance Period
+    User passes in a date range and the plane_ID and airline_name of the affected plane. Enters a maintenance period for that plane.
+    JSON:
+    {
+      airplane_ID:    int
+      airline_name:   string
+      start_datetime: datetime
+      end_datetime:   datetime
+    }
+*/
+app.post('/api/staff/add_maintenance', async (req, res) =>{
+  const {airplane_ID, airline_name, start_datetime, end_datetime} = req.body;
+  const query = 'INSERT INTO airplane_maintenance VALUES (?, ?, ?, ?)';
+  db.query(query, [airplane_ID, airline_name, start_datetime, end_datetime], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    res.json(results);
+  })
+});
+
+/*  View Frequent Customer Last Year
+    User passes in airline_name. Returns the customer email, first name, and last name who has purchased the most tickets within the last year.
+    JSON:
+    {
+      airline_name:   string
+    }
+*/
+app.post('/api/staff/view_top_buyer', async (req, res) =>{
+  const {airline_name} = req.body;
+  const query = "SELECT email, customer.first_name, customer.last_name, COUNT(ticket_ID) as total_tickets FROM customer JOIN ticket ON customer.email = ticket.payment_email \
+  WHERE departure_datetime >= CURDATE() - INTERVAL 1 YEAR AND airline_name = ?\
+  GROUP BY email ORDER BY total_tickets DESC LIMIT 1";
+  db.query(query, [airline_name], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    res.json(results);
+  })
+});
+
+/*  View Customer's Flights
+    User passes in the airline_name, and the email of a customer. Returns flight data for all flights of that airline the customer has purchased.
+    JSON:
+    {
+      airline_name:   string
+      email:          string
+    }
+*/
+app.post('/api/staff/view_customer_flights', async (req, res) =>{
+  const {airline_name} = req.body;
+  const query = "SELECT email, customer.first_name, customer.last_name, COUNT(ticket_ID) as total_tickets FROM customer JOIN ticket ON customer.email = ticket.payment_email \
+  WHERE departure_datetime >= CURDATE() - INTERVAL 1 YEAR AND airline_name = ?\
+  GROUP BY email ORDER BY total_tickets DESC LIMIT 1";
+  db.query(query, [airline_name], (err, results) => {
+    if (err) {
+      console.error('Error executing query:', err);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+    res.json(results);
+  })
+});
+
 
 // Log server message
 app.listen(process.env.PORT, () => {
