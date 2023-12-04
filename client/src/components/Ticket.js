@@ -101,11 +101,6 @@ const Ticket = (props) => {
     .replace(/,/g, '')  // Remove commas
     .replace(/^(\d{2})-(\d{2})-(\d{4})/, '$3-$1-$2'); // Rearrange to the desired format
 
-    console.log({
-      flight_ID: flightData.flight_ID,
-      departure_datetime: formattedDate,
-      flight_status: status
-    })
     const response = await fetch('http://localhost:4000/api/flights/change_status', {
             method: 'PATCH',
             headers: {'Content-Type': 'application/json'},
@@ -116,7 +111,7 @@ const Ticket = (props) => {
             })
           })
     const json = await response.json();
-    console.log(json)
+    window.location.reload()
   }
 
   return (

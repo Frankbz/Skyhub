@@ -620,14 +620,11 @@ app.patch('/api/flights/change_status', (req, res) => {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
-    res.send("Successfully updated flight status");
+    res.json(results);
   })
 });
 
-// Log server message
-app.listen(process.env.PORT, () => {
-  console.log(`Server is running on port ${process.env.PORT}`);
-});
+
 
 /*  Add Airplane
     User provides airline_name, number of seats, manufacturing company, model number, and age. Inserts the plane into the database.
@@ -737,4 +734,9 @@ app.post('/api/staff/view_ratings', async (req, res) =>{
     }
     res.json(results);
   })
+});
+
+// Log server message
+app.listen(process.env.PORT, () => {
+  console.log(`Server is running on port ${process.env.PORT}`);
 });
