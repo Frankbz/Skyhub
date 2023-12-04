@@ -55,16 +55,18 @@ const Navbar = () => {
         const json = await response.json();
         }
         else if (user && user.type === "staff"){
-          const response = await fetch('http://localhost:4000/api/staff/add_phone', {
+          const response = await fetch('http://localhost:4000/api/staff/add_phone_email', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
               airline_name: user.airline_name,
               username: user.email,
               phone_number: phone,
+              email: email,
             })
           })
           const json = await response.json();
+          console.log(json)
         }
         
         setShowModal(false);
