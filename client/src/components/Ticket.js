@@ -124,12 +124,10 @@ const Ticket = (props) => {
     />
       {/* Modal */}
       <Modal show={showModal} onHide={handleClose}>
-      <Modal.Header closeButton>
         {user ? (
           user.type === "customer" ? (
             // Content for customer type
           <>
-            <Modal.Title>Input User Information For Checkout</Modal.Title>
             <Modal.Body>
             <Form>
               <Form.Group className="mb-2" >
@@ -284,7 +282,6 @@ const Ticket = (props) => {
           </>
           ) : (
           <>
-            <Modal.Title>Change Status</Modal.Title>
             <Modal.Body>
             <Form>
               <Form.Group className="mb-2" >
@@ -302,7 +299,6 @@ const Ticket = (props) => {
         ) : (
           <p>Not Logged In</p>
         )}
-      </Modal.Header>
       
       <Modal.Footer>
         <button onClick={handleClose}>Close</button>

@@ -5,7 +5,11 @@ import NavBar from "../components/Navbar"
 import CreateFlights from "../components/forms/CreateFlights";
 import AddAirplane from "../components/forms/AddAirplane";
 import AddAirport from "../components/forms/AddAirport";
-
+import ViewFlightCustomer from "../components/forms/ViewFlightCustomer";
+import ViewRating from "../components/forms/ViewRating";
+import ScheduleMaintenance from "../components/forms/ScheduleMaintenance";
+import ViewFreq from "../components/forms/ViewFreq";
+import ViewCustomersFlight from "../components/forms/ViewCustomersFlight";
 
 const Manage = () => {
     const [selectedOption, setSelectedOption] = useState(null);
@@ -22,9 +26,9 @@ const Manage = () => {
             'Create Flights',
             'Add Airplane',
             'Add Airport',
+            'Schedule Maintenance',
             'View Customers',
             'View Ratings',
-            'Schedule Maintenance',
             'View Frequent Customer',
             'View Customer\'s Flights',
             ].map((option) => (
@@ -42,6 +46,11 @@ const Manage = () => {
             {selectedOption === 'Create Flights' && <CreateFlights />}
             {selectedOption === 'Add Airplane' && <AddAirplane />}
             {selectedOption === 'Add Airport' && <AddAirport />}
+            {selectedOption === 'Schedule Maintenance' && <ScheduleMaintenance />}
+            {selectedOption === 'View Customers' && <ViewFlightCustomer />}
+            {selectedOption === 'View Ratings' && <ViewRating />}
+            {selectedOption === 'View Frequent Customer' && <ViewFreq />}
+            {selectedOption === 'View Customer\'s Flights' && <ViewCustomersFlight />}
         </div>
 
         </>
