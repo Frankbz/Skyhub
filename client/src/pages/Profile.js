@@ -71,7 +71,7 @@ const Profile = () => {
               departure_datetime: formattedDate,
               comment: comment,
               rating: Number(rating)
-                })
+              })
             })
             const json = await response.json();
             console.log(json)

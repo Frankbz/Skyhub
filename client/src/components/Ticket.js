@@ -30,6 +30,7 @@ const Ticket = (props) => {
     passport_country: "",
     date_of_birth: ""
   })
+  const [status, setStatus] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -43,7 +44,7 @@ const Ticket = (props) => {
     setShowModal(false)
   }
 
-  const handleCheckOut = () => {
+  const handleOpen = () => {
     setShowModal(true)  
   }
   
@@ -92,175 +93,228 @@ const Ticket = (props) => {
 
   }
 
+  const handleChangeStatus = async () => {
+    const originalDate = new Date(flightData.departure_datetime);
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+    const formattedDate = originalDate.toLocaleString('en-US', options)
+    .replace(/\//g, '-')  // Replace slashes with hyphens
+    .replace(/,/g, '')  // Remove commas
+    .replace(/^(\d{2})-(\d{2})-(\d{4})/, '$3-$1-$2'); // Rearrange to the desired format
+
+    console.log({
+      flight_ID: flightData.flight_ID,
+      departure_datetime: formattedDate,
+      flight_status: status
+    })
+    const response = await fetch('http://localhost:4000/api/flights/change_status', {
+            method: 'PATCH',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+              flight_ID: flightData.flight_ID,
+              departure_datetime: formattedDate,
+              flight_status: status
+            })
+          })
+    const json = await response.json();
+    console.log(json)
+  }
+
   return (
     <>
-      <Cell flightData={flightData} handleButtonClick={handleCheckOut} buttonName={"Check Out"} buttonShow={user && user.email !== null && user.email !== undefined}/>
+      <Cell
+      flightData={flightData}
+      handleButtonClick={handleOpen}
+      buttonName={user && user.type === "customer" ? "Check Out" : "Change Status"}
+      buttonShow={user && user.email !== null && user.email !== undefined}
+    />
       {/* Modal */}
       <Modal show={showModal} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Ticket Checkout</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-2" >
-              <Form.Label>First Name</Form.Label>
-              <input
-                type="text"
-                name="first_name"
+      <Modal.Header closeButton>
+        {user ? (
+          user.type === "customer" ? (
+            // Content for customer type
+          <>
+            <Modal.Title>Input User Information For Checkout</Modal.Title>
+            <Modal.Body>
+            <Form>
+              <Form.Group className="mb-2" >
+                <Form.Label>First Name</Form.Label>
+                <input
+                  type="text"
+                  name="first_name"
+                  onChange={handleChange}
+                  value={userInfo.first_name}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Last Name</Form.Label>
+                <input
+                  type="text"
+                  name="last_name"
+                  onChange={handleChange}
+                  value={userInfo.last_name}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Building</Form.Label>
+                <input
+                  type="text"
+                  name="building"
+                  onChange={handleChange}
+                  value={userInfo.building}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Street</Form.Label>
+                <input
+                  type="text"
+                  name="street"
+                  onChange={handleChange}
+                  value={userInfo.street}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Apartment</Form.Label>
+                <input
+                  type="text"
+                  name="apartment"
+                  onChange={handleChange}
+                  value={userInfo.apartment}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>City</Form.Label>
+                <input
+                  type="text"
+                  name="city"
+                  onChange={handleChange}
+                  value={userInfo.city}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>State</Form.Label>
+                <input
+                  type="text"
+                  name="state"
+                  onChange={handleChange}
+                  value={userInfo.state}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Zip Code</Form.Label>
+                <input
+                  type="text"
+                  name="zipcode"
+                  onChange={handleChange}
+                  value={userInfo.zipcode}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+              <Form.Label>Card Type</Form.Label>
+              <Form.Select
+                name="card_type"
                 onChange={handleChange}
-                value={userInfo.first_name}
-              />
+                value={userInfo.card_type}
+                
+              >
+                <option value="debit">Debit Card</option>
+                <option value="credit">Credit Card</option>
+              </Form.Select>
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Last Name</Form.Label>
-              <input
-                type="text"
-                name="last_name"
-                onChange={handleChange}
-                value={userInfo.last_name}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Building</Form.Label>
-              <input
-                type="text"
-                name="building"
-                onChange={handleChange}
-                value={userInfo.building}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Street</Form.Label>
-              <input
-                type="text"
-                name="street"
-                onChange={handleChange}
-                value={userInfo.street}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Apartment</Form.Label>
-              <input
-                type="text"
-                name="apartment"
-                onChange={handleChange}
-                value={userInfo.apartment}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>City</Form.Label>
-              <input
-                type="text"
-                name="city"
-                onChange={handleChange}
-                value={userInfo.city}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>State</Form.Label>
-              <input
-                type="text"
-                name="state"
-                onChange={handleChange}
-                value={userInfo.state}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Zip Code</Form.Label>
-              <input
-                type="text"
-                name="zipcode"
-                onChange={handleChange}
-                value={userInfo.zipcode}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-            <Form.Label>Card Type</Form.Label>
-            <Form.Select
-              name="card_type"
-              onChange={handleChange}
-              value={userInfo.card_type}
-              
-            >
-              <option value="debit">Debit Card</option>
-              <option value="credit">Credit Card</option>
-            </Form.Select>
-          </Form.Group>
-          <Form.Group className="mb-3">
-              <Form.Label>Card Number</Form.Label>
-              <input
-                type="text"
-                name="card_number"
-                onChange={handleChange}
-                value={userInfo.card_number}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Name On Card</Form.Label>
-              <input
-                type="text"
-                name="name_on_card"
-                onChange={handleChange}
-                value={userInfo.name_on_card}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Card Expire Date</Form.Label>
-              <input
-                type="date"
-                name="card_exp_date"
-                onChange={handleChange}
-                value={userInfo.card_exp_date}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Passport Number</Form.Label>
-              <input
-                type="text"
-                name="passport_num"
-                onChange={handleChange}
-                value={userInfo.passport_num}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Passport Expire Date</Form.Label>
-              <input
-                type="date"
-                name="passport_expr"
-                onChange={handleChange}
-                value={userInfo.passport_expr}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Passport Country</Form.Label>
-              <input
-                type="text"
-                name="passport_country"
-                onChange={handleChange}
-                value={userInfo.passport_country}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Birthday</Form.Label>
-              <input
-                type="date"
-                name="date_of_birth"
-                onChange={handleChange}
-                value={userInfo.date_of_birth}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
+                <Form.Label>Card Number</Form.Label>
+                <input
+                  type="text"
+                  name="card_number"
+                  onChange={handleChange}
+                  value={userInfo.card_number}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Name On Card</Form.Label>
+                <input
+                  type="text"
+                  name="name_on_card"
+                  onChange={handleChange}
+                  value={userInfo.name_on_card}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Card Expire Date</Form.Label>
+                <input
+                  type="date"
+                  name="card_exp_date"
+                  onChange={handleChange}
+                  value={userInfo.card_exp_date}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Passport Number</Form.Label>
+                <input
+                  type="text"
+                  name="passport_num"
+                  onChange={handleChange}
+                  value={userInfo.passport_num}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Passport Expire Date</Form.Label>
+                <input
+                  type="date"
+                  name="passport_expr"
+                  onChange={handleChange}
+                  value={userInfo.passport_expr}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Passport Country</Form.Label>
+                <input
+                  type="text"
+                  name="passport_country"
+                  onChange={handleChange}
+                  value={userInfo.passport_country}
+                />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Birthday</Form.Label>
+                <input
+                  type="date"
+                  name="date_of_birth"
+                  onChange={handleChange}
+                  value={userInfo.date_of_birth}
+                />
+              </Form.Group>
+            </Form>
+            </Modal.Body>
+          </>
+          ) : (
+          <>
+            <Modal.Title>Change Status</Modal.Title>
+            <Modal.Body>
+            <Form>
+              <Form.Group className="mb-2" >
+                <Form.Label>Status (on time/delayed)</Form.Label>
+                <input
+                  type="text"
+                  onChange={(e) => {setStatus(e.target.value)}}
+                  value={status}
+                />
+              </Form.Group>
+            </Form>
+            </Modal.Body>
+            </>
+          )
+        ) : (
+          <p>Not Logged In</p>
+        )}
+      </Modal.Header>
+      
       <Modal.Footer>
-        <button onClick={handleClose}>
-          Close
-        </button>
-        <button onClick={handleBuyTicket}>
-          Proceed
-        </button>
+        <button onClick={handleClose}>Close</button>
+        <button onClick={user && user.type === "customer" ? handleBuyTicket : handleChangeStatus}>Proceed</button>
       </Modal.Footer>
-  </Modal>
-  </>
+    </Modal>
+      </>
   );
 };
 

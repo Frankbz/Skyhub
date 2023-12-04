@@ -29,6 +29,7 @@ const Navbar = () => {
         setUser({});
         // Redirect to the home page after logout
         navigate('/');
+        window.location.reload()
       };
 
       const handleClick = () =>{
