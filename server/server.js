@@ -591,7 +591,7 @@ app.post('/api/flights/create', async (req, res) => {
 app.patch('/api/flights/change_status', (req, res) => {
   const { flight_ID, departure_datetime, flight_status } = req.body;
 
-  sql = 'UPDATE flight SET flight_status = ? WHERE flight_ID = ?, departure_datetime = ?';
+  sql = 'UPDATE flight SET flight_status = ? WHERE flight_ID = ? AND departure_datetime = ?';
   db.query(sql, [flight_status, flight_ID, departure_datetime], (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
