@@ -22,6 +22,21 @@ ChartJS.register(
 
 
 const BarChart = ({from, to, spending}) => {
+  const monthDictionary = {
+    1: "January",
+    2: "February",
+    3: "March",
+    4: "April",
+    5: "May",
+    6: "June",
+    7: "July",
+    8: "August",
+    9: "September",
+    10: "October",
+    11: "November",
+    12: "December",
+  };
+
   const formatDate = (date) => {
     const options = { month: 'long', year: 'numeric' };
     return date.toLocaleDateString('en-US', options);
@@ -42,16 +57,11 @@ const BarChart = ({from, to, spending}) => {
   const labels = generateLabels(from, to);
   const d = Array(labels.length).fill(0);
 
-
   // Update data array based on spending values
   spending.forEach(({ month, monthly_sum, year }) => {
-    const spendingDate = new Date(`${year}-${month + 1}-01`);
-    const formattedDate = formatDate(spendingDate);
-  
-    // Find index in labels array
-    const index = labels.indexOf(formattedDate);
-  
-    d[index] = monthly_sum;
+    const element = monthDictionary[month] + ' ' + year.toString()
+    const index = labels.indexOf(element)
+    d[index] = monthly_sum
     
   });
 
