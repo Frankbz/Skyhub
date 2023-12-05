@@ -597,7 +597,10 @@ app.post('/api/flights/create', async (req, res) => {
   const query = util.promisify(db.query).bind(db);
   
   const results1 = await query(findSeatSQL, [airline_name, airplane_ID]);
-
+  if (!results1){
+    res.json({success: false, message: "Airplane used does not exist!"});
+    return res.status(500).json({ error: 'Internal Server Error' });
+  }
   //Insert into flight table
   await query(flightSQL, [departure_datetime, arrival_datetime, base_price, results1[0].num_of_seats]);
 
@@ -784,17 +787,36 @@ app.post('/api/staff/view_top_buyer', async (req, res) =>{
     }
 */
 app.post('/api/staff/view_customer_flights', async (req, res) =>{
-  const {airline_name} = req.body;
-  const query = "SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, airline_name, num_of_seats, ticket \
-  FROM flight NATURAL JOIN flight_location JOIN Airport as A ON arrive_airport_code = A.airport_code JOIN Airport as B ON depart_airport_code = B.airport_code NATURAL JOIN flies NATURAL JOIN airplane NATURAL JOIN ticket NATURAL JOIN customer\
-  WHERE departure_datetime > NOW() AND remaining_seats > 0 AND departure_datetime";
-  db.query(query, [airline_name], (err, results) => {
+  const {email, airline_name} = req.body;
+  const query = "SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, num_of_seats\
+  FROM flight NATURAL JOIN flight_location JOIN Airport as A ON arrive_airport_code = A.airport_code JOIN Airport as B ON depart_airport_code = B.airport_code NATURAL JOIN flies NATURAL JOIN airplane NATURAL JOIN ticket\
+  WHERE ticket.payment_email = ? AND airline_name = ?";
+  db.query(query, [email, airline_name], (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
     res.json(results);
   })
+});
+
+/*  View Earned Revenue
+    User passes in the airline_name. Returns a total revenue earned within the last month, and within the last year.
+    JSON:
+    {
+      airline_name:   string
+    }
+*/
+app.post('/api/staff/view_earned_revenue', async (req, res) =>{
+  const {airline_name} = req.body;
+  const queryMonth = "SELECT sum(ticket_price) AS revenue FROM ticket NATURAL JOIN flight NATURAL JOIN flies WHERE airline_name = ? AND purchases_datetime > CURDATE() - INTERVAL 1 MONTH";
+  const queryYear = "SELECT sum(ticket_price) AS revenue FROM ticket NATURAL JOIN flight NATURAL JOIN flies WHERE airline_name = ? AND purchases_datetime > CURDATE() - INTERVAL 1 YEAR";
+  const query = util.promisify(db.query).bind(db);
+
+  const results1 = await query(queryMonth, [airline_name]);
+  const results2 = await query(queryYear, [airline_name]);
+
+  return res.json({MonthRev: results1[0].revenue, YearRev: results2[0].revenue});
 });
 
 
