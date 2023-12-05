@@ -30,8 +30,8 @@ const Manage = () => {
             'Maintenance',
             'View Customers',
             'View Ratings',
-            'View Frequent Customer',
             'View Customer\'s Flights',
+            'View Frequent Customer',
             'Revenue'
             ].map((option) => (
             <button

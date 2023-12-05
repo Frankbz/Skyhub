@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 
 const ScheduleMaintenance = () => {
+  const user = JSON.parse(localStorage.getItem('user'));
   const [maintenanceParams, setMaintenanceParams] = useState({
     airplane_ID: '',
-    airline_name: '',
     start_datetime: '',
     end_datetime: '',
   });
@@ -17,20 +17,14 @@ const ScheduleMaintenance = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // API not working, might be datetime problem
-    console.log({
-      airplane_ID: Number(maintenanceParams.airplane_ID),
-      airline_name: maintenanceParams.airline_name,
-      start_datetime: maintenanceParams.start_datetime,
-      end_datetime: maintenanceParams.end_datetime,
-    });
+    
 
     const response = await fetch('http://localhost:4000/api/staff/view_ratings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         airplane_ID: Number(maintenanceParams.airplane_ID),
-        airline_name: maintenanceParams.airline_name,
+        airline_name: user ? user.airline_name : null,
         start_datetime: maintenanceParams.start_datetime,
         end_datetime: maintenanceParams.end_datetime,
       }),
@@ -43,7 +37,6 @@ const ScheduleMaintenance = () => {
         alert("Airplane scheduled for maintenance");
         setMaintenanceParams({
             airplane_ID: '',
-            airline_name: '',
             start_datetime: '',
             end_datetime: '',
           })
@@ -62,16 +55,6 @@ const ScheduleMaintenance = () => {
               value={maintenanceParams.airplane_ID}
               onChange={handleChange}
               placeholder="Airplane ID"
-            />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
-            <label>Airline Name:</label>
-            <input
-              type="text"
-              name="airline_name"
-              value={maintenanceParams.airline_name}
-              onChange={handleChange}
-              placeholder="Airline Name"
             />
           </div>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>

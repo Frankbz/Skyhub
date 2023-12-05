@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 const CreateFlights = () => {
+  const user = JSON.parse(localStorage.getItem('user'));
   const [searchParams, setSearchParams] = useState({
-    airline_name: '',
     departure_datetime: '',
     arrival_datetime: '',
     start_airport: '',
@@ -10,6 +10,7 @@ const CreateFlights = () => {
     base_price: '',
     airplane_ID: '',
   });
+  
 
   const handleChange = (e) => {
     setSearchParams({
@@ -24,7 +25,7 @@ const CreateFlights = () => {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-            airline_name: searchParams.airline_name,
+            airline_name: user ? user.airline_name : null,
             departure_datetime: searchParams.departure_datetime,
             arrival_datetime: searchParams.arrival_datetime,
             start_airport: searchParams.start_airport,
@@ -41,7 +42,6 @@ const CreateFlights = () => {
     
         // Clear the form by resetting the state to its initial values
         setSearchParams({
-          airline_name: '',
           departure_datetime: '',
           arrival_datetime: '',
           start_airport: '',
@@ -56,16 +56,6 @@ const CreateFlights = () => {
     <form onSubmit={handleSubmit}>
       <div style={{ width: '100%', height: '100%', border: '1px solid #ccc', padding: '20px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
-            <label>Airline:</label>
-            <input
-              type="text"
-              name="airline_name"
-              value={searchParams.airline_name}
-              onChange={handleChange}
-              placeholder="Airline Name"
-            />
-          </div>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
             <label>Departure:</label>
             <input

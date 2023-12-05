@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 const AddAirplane = () => {
+  const user = JSON.parse(localStorage.getItem('user'));
   const [airplaneParams, setAirplaneParams] = useState({
-    airline_name: '',
     num_of_seats: '',
     manufacturing_company: '',
     model_number: '',
@@ -19,19 +19,11 @@ const AddAirplane = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log({
-      airline_name: airplaneParams.airline_name,
-      num_of_seats: Number(airplaneParams.num_of_seats),
-      manufacturing_company: airplaneParams.manufacturing_company,
-      model_number: airplaneParams.model_number,
-      age: Number(airplaneParams.age),
-    });
-
     const response = await fetch('http://localhost:4000/api/staff/add_plane', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({
-            airline_name: airplaneParams.airline_name,
+            airline_name: user ? user.airline_name : null,
             num_of_seats: Number(airplaneParams.num_of_seats),
             manufacturing_company: airplaneParams.manufacturing_company,
             model_number: airplaneParams.model_number,
@@ -43,7 +35,6 @@ const AddAirplane = () => {
     if (response.ok) {
         alert("Airplane successfully added");
         setAirplaneParams({
-            airline_name: '',
             num_of_seats: '',
             manufacturing_company: '',
             model_number: '',
@@ -56,16 +47,6 @@ const AddAirplane = () => {
     <form onSubmit={handleSubmit}>
       <div style={{ width: '100%', height: '100%', border: '1px solid #ccc', padding: '20px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
-            <label>Airline:</label>
-            <input
-              type="text"
-              name="airline_name"
-              value={airplaneParams.airline_name}
-              onChange={handleChange}
-              placeholder="Airline Name"
-            />
-          </div>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '10px' }}>
             <label>Number of Seats:</label>
             <input

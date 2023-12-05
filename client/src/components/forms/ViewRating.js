@@ -21,7 +21,7 @@ const ViewRating = () => {
       departure_datetime: searchParams.departure_datetime,
     });
 
-    const response = await fetch('http://localhost:4000/api/staff/view_rating', {
+    const response = await fetch('http://localhost:4000/api/staff/view_ratings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

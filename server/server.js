@@ -558,7 +558,7 @@ app.post('/api/staff/view_flights', async (req, res) =>{
 app.post('/api/flights/view_customers', async (req, res)=>{
   const {flight_ID, departure_datetime} = req.body;
   query = "SELECT * FROM ticket WHERE flight_ID = ? AND departure_datetime = ?";
-  db.query(query, flight_ID, departure_datetime, (err, results) => {
+  db.query(query, [flight_ID, departure_datetime], (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
@@ -732,12 +732,14 @@ app.post('/api/staff/add_airport', async (req, res) =>{
 */
 app.post('/api/staff/view_ratings', async (req, res) =>{
   const {flight_ID, departure_datetime} = req.body;
+  console.log(req.body)
   const query = 'SELECT email, rating, comment FROM rating NATURAL LEFT JOIN comment WHERE flight_ID = ? AND departure_datetime = ?';
   db.query(query, [flight_ID, departure_datetime], (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
+    console.log(results)
     res.json(results);
   })
 });
