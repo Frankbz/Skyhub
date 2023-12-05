@@ -10,6 +10,7 @@ import ViewRating from "../components/forms/ViewRating";
 import ScheduleMaintenance from "../components/forms/ScheduleMaintenance";
 import ViewFreq from "../components/forms/ViewFreq";
 import ViewCustomersFlight from "../components/forms/ViewCustomersFlight";
+import Revenue from "../components/forms/Revenue";
 
 const Manage = () => {
     const [selectedOption, setSelectedOption] = useState(null);
@@ -26,11 +27,12 @@ const Manage = () => {
             'Create Flights',
             'Add Airplane',
             'Add Airport',
-            'Schedule Maintenance',
+            'Maintenance',
             'View Customers',
             'View Ratings',
             'View Frequent Customer',
             'View Customer\'s Flights',
+            'Revenue'
             ].map((option) => (
             <button
                 key={option}
@@ -46,11 +48,12 @@ const Manage = () => {
             {selectedOption === 'Create Flights' && <CreateFlights />}
             {selectedOption === 'Add Airplane' && <AddAirplane />}
             {selectedOption === 'Add Airport' && <AddAirport />}
-            {selectedOption === 'Schedule Maintenance' && <ScheduleMaintenance />}
+            {selectedOption === 'Maintenance' && <ScheduleMaintenance />}
             {selectedOption === 'View Customers' && <ViewFlightCustomer />}
             {selectedOption === 'View Ratings' && <ViewRating />}
             {selectedOption === 'View Frequent Customer' && <ViewFreq />}
             {selectedOption === 'View Customer\'s Flights' && <ViewCustomersFlight />}
+            {selectedOption === 'Revenue' && <Revenue />}
         </div>
 
         </>
