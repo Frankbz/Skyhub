@@ -177,7 +177,7 @@ app.post('/api/user/login', async (req, res) => {
 app.post('/api/flights/view', async (req, res) => {
   const { start_date_range, end_date_range, start_airport, dest_airport, start_city, dest_city} = req.body;
 
-  let query = "SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, airline_name, num_of_seats, \
+  let query = "SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, airline_name, remaining_seats AS num_of_seats, \
   CASE WHEN remaining_seats/num_of_seats > 0.2 THEN base_price ELSE base_price*1.25 END AS base_price \
   FROM flight NATURAL JOIN flight_location JOIN Airport as A ON arrive_airport_code = A.airport_code JOIN Airport as B ON depart_airport_code = B.airport_code NATURAL JOIN flies NATURAL JOIN airplane\
   WHERE departure_datetime > NOW() AND remaining_seats > 0";
@@ -224,7 +224,7 @@ app.post('/api/flights/view', async (req, res) => {
 */
 app.post('/api/profile/tickets', async (req, res) => {
   const {email} = req.body;
-  query = "SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, airplane_ID, airline_name, num_of_seats, ticket_price AS base_price\
+  query = "SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, airplane_ID, airline_name, remaining_seats as num_of_seats, ticket_price AS base_price\
   FROM ticket NATURAL JOIN flight NATURAL JOIN flight_location NATURAL JOIN flies NATURAL JOIN airplane WHERE payment_email = ?"
 
   db.query(query, [email], (err, results) => {
@@ -414,7 +414,7 @@ app.post('/api/comment/create', async (req, res) =>{
   let commentSQL;
   let ratingSQL;
   const checkRateSQL = 'SELECT * FROM rating WHERE email = ? AND flight_ID = ? AND  departure_datetime = ?';
-  const checkCommentSQL = 'SELECT * FROM rating WHERE email = ? AND flight_ID = ? AND  departure_datetime = ?';
+  const checkCommentSQL = 'SELECT * FROM comment WHERE email = ? AND flight_ID = ? AND  departure_datetime = ?';
   const query = util.promisify(db.query).bind(db);
 
 
@@ -493,7 +493,7 @@ app.post('/api/profile/add_phone', async (req, res) =>{
 app.post('/api/staff/view_flights', async (req, res) =>{
   const {airline_name, start_date_range, end_date_range, start_airport, dest_airport, start_city, dest_city} = req.body;
 
-  let query = "SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, airline_name, num_of_seats, \
+  let query = "SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, airline_name, remaining_seats AS num_of_seats, \
   CASE WHEN remaining_seats/num_of_seats > 0.2 THEN base_price ELSE base_price*1.25 END AS base_price \
   FROM flight NATURAL JOIN flight_location JOIN Airport as A ON arrive_airport_code = A.airport_code JOIN Airport as B ON depart_airport_code = B.airport_code NATURAL JOIN flies NATURAL JOIN airplane\
   WHERE airline_name = ? AND departure_datetime";
@@ -638,11 +638,10 @@ app.patch('/api/flights/change_status', (req, res) => {
       model_number:         string
       age:                  int  
     }
-    TODO: change DB to auto increment ID (FIX DUPLICATE IDS)
 */
 app.post('/api/staff/add_plane', async (req, res) =>{
   const {airline_name, num_of_seats, manufacturing_company, model_number, age} = req.body;
-  const query = 'INSERT INTO airplane (airplane_ID, num_of_seats, manufacturing_company, model_number, age, airline_name) VALUES (0, ?, ?, ?, ?, ?)'; // ID IS TEMPORARILY 0 - WILL ONLY WORK ONCE BEFORE DUPLICATE VALUE CONFLICT
+  const query = 'INSERT INTO airplane (airplane_ID, num_of_seats, manufacturing_company, model_number, age, airline_name) VALUES (0, ?, ?, ?, ?, ?)';
   db.query(query, [num_of_seats, manufacturing_company, model_number, age, airline_name], (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
