@@ -180,17 +180,14 @@ app.post('/api/flights/view', async (req, res) => {
   let query = "SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, airline_name, num_of_seats, \
   CASE WHEN remaining_seats/num_of_seats > 0.2 THEN base_price ELSE base_price*1.25 END AS base_price \
   FROM flight NATURAL JOIN flight_location JOIN Airport as A ON arrive_airport_code = A.airport_code JOIN Airport as B ON depart_airport_code = B.airport_code NATURAL JOIN flies NATURAL JOIN airplane\
-  WHERE departure_datetime > NOW() AND remaining_seats > 0 AND departure_datetime";
+  WHERE departure_datetime > NOW() AND remaining_seats > 0";
 
   //Array to dynamically hold values for the prepared statement
   const values = [];
   if (start_date_range && end_date_range)
     values.push(start_date_range, end_date_range);
-  //If query contains date range, use query's date range, otherwise use now to +30 days
   if (start_date_range && end_date_range)
-    query += (start_date_range != end_date_range) ? (' BETWEEN ? AND ?') : (' BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY)');
-  else
-    query += ' BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY)';
+    query += (start_date_range != end_date_range) ? ('AND departure_datetime BETWEEN ? AND ?') : ('AND departure_datetime BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY)');
 
   //Checks start/dest airport and city if passed in
   if (start_airport){
@@ -227,7 +224,8 @@ app.post('/api/flights/view', async (req, res) => {
 */
 app.post('/api/profile/tickets', async (req, res) => {
   const {email} = req.body;
-  query = "SELECT * FROM ticket NATURAL JOIN flight NATURAL JOIN flight_location NATURAL JOIN flies WHERE payment_email = ?"
+  query = "SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, airplane_ID, airline_name, num_of_seats, ticket_price AS base_price\
+  FROM ticket NATURAL JOIN flight NATURAL JOIN flight_location NATURAL JOIN flies NATURAL JOIN airplane WHERE payment_email = ?"
 
   db.query(query, [email], (err, results) => {
     if (err) {
@@ -302,25 +300,14 @@ app.post('/api/flights/purchase_ticket', async (req, res) =>{
   // Find base_price, remaining_seats and num_of_seats, use to calculate final price 
   console.log(flightQuery);
   const results1 = await query(flightQuery, [flight_ID, departure_datetime]);
-  console.log(results1);
+  console.log(results1[0].final_price);
+  const final_price = parseFloat(results1[0].final_price);
+  // Second query to insert ticket with the correct values
+  const values = [flight_ID, departure_datetime, final_price, first_name, last_name, date_of_birth, email];
+  await query(newTicketQuery, values);
 
-  //Second query to insert ticket with the correct values
-  const values = [flight_ID, departure_datetime, results1[0].final_price, first_name, last_name, date_of_birth, email];
-  db.query(newTicketQuery, values, (err, results) => {           
-    if (err) {
-      console.error('Error executing query:', err);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-    console.log(results);
-    res.json(results);
-  })
-
-  db.query(updateSeatQuery, [flight_ID, departure_datetime], (err, results) =>{
-    if (err) {
-      console.error('Error executing query:', err);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  });
+  // Third query to update remaining seats
+  await db.query(updateSeatQuery, [flight_ID, departure_datetime]);
 
 });
 
@@ -558,12 +545,13 @@ app.post('/api/staff/view_flights', async (req, res) =>{
 app.post('/api/flights/view_customers', async (req, res)=>{
   const {flight_ID, departure_datetime} = req.body;
   query = "SELECT * FROM ticket WHERE flight_ID = ? AND departure_datetime = ?";
+  console.log(query);
   db.query(query, [flight_ID, departure_datetime], (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
-    //console.log(results);
+    console.log(results);
     res.json(results);
   })
 });
