@@ -16,7 +16,6 @@ const Spending = () => {
     useEffect(() => {
         // Fetch initial data for the last 6 months
         const fetchInitialData = async () => {
-          console.log(11)
           const response = await fetch(
             "http://localhost:4000/api/profile/get_spending",
             {
@@ -33,7 +32,7 @@ const Spending = () => {
 
         fetchInitialData();
         
-      }, []);
+      }, [user.email]);
 
     // Function to get default "from" date (this month - 6)
     function getDefaultFromDate() {
