@@ -16,11 +16,6 @@ const ViewRating = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    console.log({
-      flight_ID: Number(searchParams.flight_ID),
-      departure_datetime: searchParams.departure_datetime,
-    });
 
     const response = await fetch('http://localhost:4000/api/staff/view_ratings', {
       method: 'POST',
@@ -32,10 +27,14 @@ const ViewRating = () => {
     });
 
     const json = await response.json();
-
+    console.log(json)
     setComments(json)
     console.log(comments)
   };
+
+  const averageRating = comments.length > 0
+    ? comments.reduce((sum, comment) => sum + comment.rating, 0) / comments.length
+    : 0;
 
   return (
     <>
@@ -68,6 +67,9 @@ const ViewRating = () => {
     <div>
       {comments.length > 0 && (<>
         <h2>Comments</h2>
+        <p style={{ marginTop: '10px', marginBottom: '10px' }}>
+              Average Rating: {averageRating.toFixed(2)}
+            </p>
         <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid #ddd' }}>
