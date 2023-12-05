@@ -5,6 +5,8 @@ const ViewFlightCustomer = () => {
     flight_ID: '',
     departure_datetime: '',
   });
+  const [customers, setCustomers] = useState([]);
+
 
   const handleChange = (e) => {
     setSearchParams({
@@ -32,9 +34,11 @@ const ViewFlightCustomer = () => {
       })
     const json = await response.json();
     console.log(json)
+    setCustomers(json)
   };
 
   return (
+    <>
     <form onSubmit={handleSubmit}>
       <div style={{ width: '100%', height: '100%', border: '1px solid #ccc', padding: '20px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -61,6 +65,31 @@ const ViewFlightCustomer = () => {
         <button type="submit">Submit</button>
       </div>
     </form>
+    {customers.length > 0 && (
+       <div>
+       <h2>Customer Table</h2>
+       <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
+         <thead>
+           <tr>
+             <th>First Name</th>
+             <th>Last Name</th>
+             <th>Ticket ID</th>
+           </tr>
+         </thead>
+         <tbody>
+           {customers.map((customer, index) => (
+             <tr key={index}>
+               <td>{customer.first_name}</td>
+               <td>{customer.last_name}</td>
+               <td>{customer.ticket_ID}</td>
+             </tr>
+           ))}
+         </tbody>
+       </table>
+     </div>
+    )}
+    
+    </>
   );
 };
 

@@ -5,6 +5,7 @@ const ViewRating = () => {
     flight_ID: '',
     departure_datetime: '',
   });
+  const [comments, setComments] = useState([]);
 
   const handleChange = (e) => {
     setSearchParams({
@@ -31,10 +32,13 @@ const ViewRating = () => {
     });
 
     const json = await response.json();
-    console.log(json);
+
+    setComments(json)
+    console.log(comments)
   };
 
   return (
+    <>
     <form onSubmit={handleSubmit}>
       <div style={{ width: '100%', height: '100%', border: '1px solid #ccc', padding: '20px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -61,6 +65,32 @@ const ViewRating = () => {
         <button type="submit">Submit</button>
       </div>
     </form>
+    <div>
+      {comments.length > 0 && (<>
+        <h2>Comments</h2>
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid #ddd' }}>
+              <th>Email</th>
+              <th>Rating</th>
+              <th>Comment</th>
+            </tr>
+          </thead>
+          <tbody>
+            {comments.map((comment, index) => (
+              <tr key={index} style={{ borderBottom: '1px solid #ddd' }}>
+                <td>{comment.email}</td>
+                <td>{comment.rating}</td>
+                <td>{comment.comment}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      
+      </>
+      )}
+      </div>
+    </>
   );
 };
 
