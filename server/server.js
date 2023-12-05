@@ -571,7 +571,7 @@ app.post('/api/flights/view_customers', async (req, res)=>{
 
 /*  Create New Flight
     User provides information for a new flight, a new flight is created under the user's airline
-    Airplane used for the flight must NOT coincide with any maintenance periods for said airplane
+    A plane with airline_name and airplane_ID must exist in the database, and the flight date must NOT coincide with any maintenance periods for said airplane
     JSON FORMAT
     {
       airline_name:         string
@@ -585,7 +585,6 @@ app.post('/api/flights/view_customers', async (req, res)=>{
     TODO: check maintenance conflicts
 */
 app.post('/api/flights/create', async (req, res) => {
-  console.log('entered flights route');
   const{ airline_name, departure_datetime, arrival_datetime, start_airport, dest_airport, base_price, airplane_ID} = req.body;
   //Intermediate query - find number of seats
   const findSeatSQL = 'SELECT num_of_seats FROM Airplane WHERE airline_name = ? AND airplane_ID = ?';
@@ -600,26 +599,12 @@ app.post('/api/flights/create', async (req, res) => {
   const results1 = await query(findSeatSQL, [airline_name, airplane_ID]);
 
   //Insert into flight table
-  db.query(flightSQL, [departure_datetime, arrival_datetime, base_price, results1[0].num_of_seats], (err, results) => {
-    if (err) {
-      console.error('Error executing query:', err);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  })
+  await query(flightSQL, [departure_datetime, arrival_datetime, base_price, results1[0].num_of_seats]);
+
   //Insert into flight_location table
-  db.query(locationSQL, [departure_datetime, start_airport, dest_airport], (err, results) => {
-    if (err) {
-      console.error('Error executing query:', err);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  })
+  await query(locationSQL, [departure_datetime, start_airport, dest_airport]);
   //Insert into flies table
-  db.query(airplaneSQL, [departure_datetime, airplane_ID, airline_name], (err, results) => {
-    if (err) {
-      console.error('Error executing query:', err);
-      return res.status(500).json({ error: 'Internal Server Error' });
-    }
-  })
+  await query(airplaneSQL, [departure_datetime, airplane_ID, airline_name]);
   res.json({success: true, message: "successfully created flight"});
 });
 
@@ -675,8 +660,8 @@ app.post('/api/staff/add_plane', async (req, res) =>{
     {
       airline_name: string
       username:     string
-      phone_number: string
-      email:        string
+      phone_number: string (OPTIONAL)
+      email:        string (OPTIONAL)
     }
 */
 app.post('/api/staff/add_phone_email', async (req, res) =>{
@@ -800,9 +785,9 @@ app.post('/api/staff/view_top_buyer', async (req, res) =>{
 */
 app.post('/api/staff/view_customer_flights', async (req, res) =>{
   const {airline_name} = req.body;
-  const query = "SELECT email, customer.first_name, customer.last_name, COUNT(ticket_ID) as total_tickets FROM customer JOIN ticket ON customer.email = ticket.payment_email \
-  WHERE departure_datetime >= CURDATE() - INTERVAL 1 YEAR AND airline_name = ?\
-  GROUP BY email ORDER BY total_tickets DESC LIMIT 1";
+  const query = "SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, airline_name, num_of_seats, ticket \
+  FROM flight NATURAL JOIN flight_location JOIN Airport as A ON arrive_airport_code = A.airport_code JOIN Airport as B ON depart_airport_code = B.airport_code NATURAL JOIN flies NATURAL JOIN airplane NATURAL JOIN ticket NATURAL JOIN customer\
+  WHERE departure_datetime > NOW() AND remaining_seats > 0 AND departure_datetime";
   db.query(query, [airline_name], (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
