@@ -300,14 +300,14 @@ app.post('/api/flights/purchase_ticket', async (req, res) =>{
   // Find base_price, remaining_seats and num_of_seats, use to calculate final price 
   console.log(flightQuery);
   const results1 = await query(flightQuery, [flight_ID, departure_datetime]);
-  console.log(results1[0].final_price);
+  console.log(results1);
   const final_price = parseFloat(results1[0].final_price);
   // Second query to insert ticket with the correct values
   const values = [flight_ID, departure_datetime, final_price, first_name, last_name, date_of_birth, email];
   await query(newTicketQuery, values);
 
   // Third query to update remaining seats
-  await db.query(updateSeatQuery, [flight_ID, departure_datetime]);
+  await query(updateSeatQuery, [flight_ID, departure_datetime]);
 
 });
 

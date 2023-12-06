@@ -1,0 +1,13 @@
+Client folder:
+	/public: some images used in the project
+	/src: source codes for frontend
+		/components: frontend react components that are used to handle most logic
+		/hooks: customized hooks for user authentication
+		/pages: all frontend pages
+		App.js: URL routes associated with pages
+		package.json: packages and dependencies for frontend
+
+Server folder:
+	.env: environment-specific key-value pair (used for backend port number specification) 
+	server.js: backend setups, middleware and all API routes
+	package.json: packages and dependencies for backend

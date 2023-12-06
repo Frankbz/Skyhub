@@ -9,7 +9,7 @@ import { useState } from "react";
 const Home = () => {
   const [flights, setFlights] = useState([]);
   const user = JSON.parse(localStorage.getItem('user'));
-
+  console.log(flights)
   const handleFlights = (data) => {
     setFlights(data);
   };
