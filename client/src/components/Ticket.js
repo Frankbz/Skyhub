@@ -57,7 +57,7 @@ const Ticket = (props) => {
     .replace(/,/g, '')  // Remove commas
     .replace(/^(\d{2})-(\d{2})-(\d{4})/, '$3-$1-$2'); // Rearrange to the desired format
 
-    console.log(999, userInfo)
+    
     const response1 = await fetch('http://localhost:4000/api/profile/update_info', {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
@@ -70,7 +70,7 @@ const Ticket = (props) => {
       console.log(json1.error)
       return
     }
-    
+    console.log(1)
     const response2 = await fetch('http://localhost:4000/api/flights/purchase_ticket', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -89,6 +89,7 @@ const Ticket = (props) => {
       console.log(json2.error)
       return
     }
+    console.log(2)
     navigate("/profile")
 
   }

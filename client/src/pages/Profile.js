@@ -26,6 +26,7 @@ const Profile = () => {
                 body: JSON.stringify({ email: user.email })
             })
             const json = await response.json()
+            
             if (response.ok){
                 setFlights(json) 
             }
@@ -34,6 +35,7 @@ const Profile = () => {
     useEffect(() => getInfo, [user])
 
     const handleCancel = async (ticket_ID) => { 
+        console.log({ email: user.email, ticket_ID: ticket_ID })
         const response = await fetch('http://localhost:4000/api/flights/delete_ticket', {
             method: 'DELETE',
             headers: {'Content-Type': 'application/json'},

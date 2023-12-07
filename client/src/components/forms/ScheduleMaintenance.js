@@ -18,8 +18,13 @@ const ScheduleMaintenance = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-
-    const response = await fetch('http://localhost:4000/api/staff/view_ratings', {
+    console.log({
+      airplane_ID: Number(maintenanceParams.airplane_ID),
+      airline_name: user ? user.airline_name : null,
+      start_datetime: maintenanceParams.start_datetime,
+      end_datetime: maintenanceParams.end_datetime,
+    })
+    const response = await fetch('http://localhost:4000/api/staff/add_maintenance', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
