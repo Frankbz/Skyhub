@@ -17,7 +17,7 @@ const Cell = ({ flightData, handleButtonClick, buttonName, buttonShow }) => {
           <p className="city-name">{flightData.departure_city}</p>
           <p className="airport-code">{flightData.depart_airport_code}</p>
           <p className="time-info">
-            <strong>{new Date(flightData.departure_datetime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</strong>
+            <strong>{new Date(flightData.departure_datetime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</strong>
             <br />
             {new Date(flightData.departure_datetime).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}
           </p>
@@ -27,7 +27,7 @@ const Cell = ({ flightData, handleButtonClick, buttonName, buttonShow }) => {
           <p className="city-name">{flightData.arrival_city}</p>
           <p className="airport-code">{flightData.arrive_airport_code}</p>
           <p className="time-info">
-            <strong>{new Date(flightData.arrival_datetime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</strong>
+            <strong>{new Date(flightData.arrival_datetime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</strong>
             <br />
             {new Date(flightData.arrival_datetime).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}
           </p>

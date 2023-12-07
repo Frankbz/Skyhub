@@ -21,7 +21,7 @@ const Ticket = (props) => {
     city: "",
     state: "",
     zipcode: "",
-    card_type: "",
+    card_type: "debit",
     card_number: "",
     name_on_card: "",
     card_exp_date: "",
@@ -57,7 +57,7 @@ const Ticket = (props) => {
     .replace(/,/g, '')  // Remove commas
     .replace(/^(\d{2})-(\d{2})-(\d{4})/, '$3-$1-$2'); // Rearrange to the desired format
 
-    
+    console.log(999, userInfo)
     const response1 = await fetch('http://localhost:4000/api/profile/update_info', {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
