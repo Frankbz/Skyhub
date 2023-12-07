@@ -1,0 +1,7 @@
+Frank Zhao (bz2190@nyu.edu)
+    Frontend design and development
+    Backend setup and authentication
+    
+Jonathan Guan (jg6496@nyu.edu)
+    Backend API routes
+    Database management
