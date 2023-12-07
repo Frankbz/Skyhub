@@ -6,6 +6,7 @@ const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const util = require('util');
+const { start } = require('repl');
 
 const app = express();
 
@@ -586,15 +587,13 @@ app.post('/api/flights/create', async (req, res) => {
   //Search for conflicting maintenance periods
   const results1 = await query(findFlightsMaintenanceSQL, [airplane_ID, airline_name, departure_datetime, arrival_datetime, departure_datetime, arrival_datetime]);
   if (results1[0]){
-    console.log(results1[0]);
-    res.json({success: false, message: "Conflicting flight time period with plane maintenance period!"});
-    return res.status(500).json({ error: 'Internal Server Error' });
+    console.log(results1);
+    return res.status(500).json({success: false, message: "Conflicting flight time period with plane maintenance period!"});
   }
   //Find number of seats
   const results2 = await query(findSeatSQL, [airline_name, airplane_ID]);
   if (!results2[0]){
-    res.json({success: false, message: "Airplane used does not exist!"});
-    return res.status(500).json({ error: 'Internal Server Error' });
+    return res.status(500).json({success: false, message: "Airplane used does not exist!"});
   }
   //Insert into flight table, save the ID being inserted
   const results3 = await query(flightSQL, [departure_datetime, arrival_datetime, base_price, results2[0].num_of_seats]);
