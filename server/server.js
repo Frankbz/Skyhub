@@ -415,18 +415,17 @@ app.post('/api/comment/create', async (req, res) =>{
   const {email, flight_ID, departure_datetime, comment, rating} = req.body;
   let commentSQL;
   let ratingSQL;
-  const checkRateSQL = 'SELECT * FROM rating WHERE email = ? AND flight_ID = ? AND  departure_datetime = ?';
-  const checkCommentSQL = 'SELECT * FROM comment WHERE email = ? AND flight_ID = ? AND  departure_datetime = ?';
+  const checkRateSQL = 'SELECT * FROM rating WHERE email = ? AND flight_ID = ? AND departure_datetime = ?';
+  const checkCommentSQL = 'SELECT * FROM comment WHERE email = ? AND flight_ID = ? AND departure_datetime = ?';
   const query = util.promisify(db.query).bind(db);
 
 
   // Check if the rating already exists - if so, update it, if not, create a new one
   const results1 = await query(checkRateSQL, [email, flight_ID, departure_datetime]);
-  if(results1)
+  if(results1[0])
     ratingSQL = 'UPDATE rating SET rating = ? WHERE email = ? AND flight_ID = ? AND departure_datetime = ?';
   else
     ratingSQL = 'INSERT INTO rating (rating, email, flight_ID, departure_datetime) VALUES (?, ?, ?, ?)';
-
   db.query(ratingSQL, [rating, email, flight_ID, departure_datetime], (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
@@ -438,11 +437,10 @@ app.post('/api/comment/create', async (req, res) =>{
   // Check if the comment already exists - if so, update it, if not, create a new one
   if (comment){
     const results2 = await query(checkCommentSQL, [email, flight_ID, departure_datetime]);
-    if (results2)
+    if (results2[0])
       commentSQL = 'UPDATE comment SET comment = ? WHERE email = ? AND flight_ID = ? AND departure_datetime = ?';
     else
       commentSQL = 'INSERT INTO comment (comment, email, flight_ID, departure_datetime) VALUES (?, ?, ?, ?)';
-
     db.query(commentSQL, [comment, email, flight_ID, departure_datetime], (err, results) => {
       if (err) {
         console.error('Error executing query:', err);
@@ -594,7 +592,7 @@ app.post('/api/flights/create', async (req, res) => {
   }
   //Find number of seats
   const results2 = await query(findSeatSQL, [airline_name, airplane_ID]);
-  if (!results2){
+  if (!results2[0]){
     res.json({success: false, message: "Airplane used does not exist!"});
     return res.status(500).json({ error: 'Internal Server Error' });
   }
@@ -746,7 +744,7 @@ app.post('/api/staff/view_ratings', async (req, res) =>{
 */
 app.post('/api/staff/add_maintenance', async (req, res) =>{
   const {airplane_ID, airline_name, start_datetime, end_datetime} = req.body;
-  const query = 'INSERT INTO airplane_maintenance VALUES (?, ?, ?, ?)';
+  const query = 'INSERT INTO airplane_maintenance (airplane_ID, airline_name, start_datetime, end_datetime) VALUES (?, ?, ?, ?)';
   db.query(query, [airplane_ID, airline_name, start_datetime, end_datetime], (err, results) => {
     if (err) {
       console.error('Error executing query:', err);
@@ -765,7 +763,8 @@ app.post('/api/staff/add_maintenance', async (req, res) =>{
 */
 app.post('/api/staff/view_top_buyer', async (req, res) =>{
   const {airline_name} = req.body;
-  const query = "SELECT email, customer.first_name, customer.last_name, COUNT(ticket_ID) as total_tickets FROM customer JOIN ticket ON customer.email = ticket.payment_email NATURAL JOIN flies\
+  const query = "SELECT email, customer.first_name AS first_name, customer.last_name AS last_name, COUNT(ticket_ID) as total_tickets \
+  FROM customer JOIN ticket ON customer.email = ticket.payment_email NATURAL JOIN flies\
   WHERE departure_datetime >= CURDATE() - INTERVAL 1 YEAR AND airline_name = ?\
   GROUP BY email ORDER BY total_tickets DESC LIMIT 1";
   db.query(query, [airline_name], (err, results) => {
