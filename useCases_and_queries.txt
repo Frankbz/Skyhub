@@ -71,7 +71,7 @@ GROUP BY YEAR(purchases_datetime), MONTH(purchases_datetime) ORDER BY YEAR(purch
 	This query sums all of the user’s ticket’s prices, and groups the sums for each (month, year). The actual code dynamically changes the SQL to include a date range instead of the past 6 months range in this query.
 
 7.Logout: 
-
+	We don’t use any queries for logging out. We are using JWT so we just delete the token and session in the front end.
 Airline Staff use cases:
 1. View flights: 
 SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, airline_name, num_of_seats,
