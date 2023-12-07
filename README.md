@@ -26,6 +26,27 @@ This is a class project for CS-UY 3083. This full-stack website is used for flig
   - View the most frequent customer of the airline
   - View the revenue of last month and last year of the airline
 
+## Project Showcase
+### Staff/Customer Login/Sign up
+![image](https://github.com/Frankbz/Skyhub/assets/98783358/98e196e0-3a53-4662-80d4-63969cb4f6cb)
+
+### Customer Homepage
+![image](https://github.com/Frankbz/Skyhub/assets/98783358/0dff96c1-3c50-4930-a4f4-c9ba5813a4fd)
+
+### Customer Profile Page
+![image](https://github.com/Frankbz/Skyhub/assets/98783358/e98200c0-6e7b-4790-800d-8c7042f547be)
+
+### Customer Track Spending
+![image](https://github.com/Frankbz/Skyhub/assets/98783358/5766ea18-bfe9-453b-b21b-2ed870e6522a)
+
+### Staff Homepags
+![image](https://github.com/Frankbz/Skyhub/assets/98783358/3a8b1cdb-6c93-4eb7-8643-8518678aa02a)
+
+### Staff Management Page
+![image](https://github.com/Frankbz/Skyhub/assets/98783358/9e7c01bd-9a91-4a75-a4f1-4ca4027537d6)
+
+
+
 ## Tech Stack
 * Frontend: React.js
 * Backend: Node.js
