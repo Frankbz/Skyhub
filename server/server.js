@@ -188,7 +188,7 @@ app.post('/api/flights/view', async (req, res) => {
   if (start_date_range && end_date_range)
     values.push(start_date_range, end_date_range);
   if (start_date_range && end_date_range)
-    query += (start_date_range != end_date_range) ? ('AND departure_datetime BETWEEN ? AND ?') : ('AND departure_datetime BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY)');
+    query += (start_date_range != end_date_range) ? (' AND departure_datetime BETWEEN ? AND ?') : (' AND departure_datetime BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY)');
 
   //Checks start/dest airport and city if passed in
   if (start_airport){
