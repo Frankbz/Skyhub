@@ -224,7 +224,7 @@ app.post('/api/flights/view', async (req, res) => {
 */
 app.post('/api/profile/tickets', async (req, res) => {
   const {email} = req.body;
-  query = "SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, airplane_ID, airline_name, remaining_seats as num_of_seats, ticket_price AS base_price\
+  query = "SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, airplane_ID, airline_name, remaining_seats as num_of_seats, ticket_ID, ticket_price AS base_price\
   FROM ticket NATURAL JOIN flight NATURAL JOIN flight_location NATURAL JOIN flies NATURAL JOIN airplane WHERE payment_email = ?"
 
   db.query(query, [email], (err, results) => {
@@ -328,7 +328,9 @@ app.delete('/api/flights/delete_ticket', async (req, res) =>{
   const query = util.promisify(db.query).bind(db);
   
   // Gets flight details from the ticket information
+  console.log(ticket_ID);
   const results1 = await query(getFlightQuery, [ticket_ID]);
+  console.log(results1);
 
   // Uses flight details to increase available seats on the flight by 1 (if the ticket can be removed)
   if (results1){
@@ -585,7 +587,8 @@ app.post('/api/flights/create', async (req, res) => {
   const query = util.promisify(db.query).bind(db);
   //Search for conflicting maintenance periods
   const results1 = await query(findFlightsMaintenanceSQL, [airplane_ID, airline_name, departure_datetime, arrival_datetime, departure_datetime, arrival_datetime]);
-  if (results1){
+  if (results1[0]){
+    console.log(results1[0]);
     res.json({success: false, message: "Conflicting flight time period with plane maintenance period!"});
     return res.status(500).json({ error: 'Internal Server Error' });
   }
@@ -596,7 +599,7 @@ app.post('/api/flights/create', async (req, res) => {
     return res.status(500).json({ error: 'Internal Server Error' });
   }
   //Insert into flight table, save the ID being inserted
-  const results3 = await query(flightSQL, [departure_datetime, arrival_datetime, base_price, results1[0].num_of_seats]);
+  const results3 = await query(flightSQL, [departure_datetime, arrival_datetime, base_price, results2[0].num_of_seats]);
   const flight_ID = results3.insertId;
 
   //Insert into flight_location table
