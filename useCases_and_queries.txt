@@ -1,0 +1,141 @@
+GENERAL USE CASES:
+1. View Public Info
+SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, airline_name, num_of_seats, 
+CASE WHEN remaining_seats/num_of_seats > 0.2 
+THEN base_price 
+ELSE base_price*1.25 END AS base_price
+FROM flight NATURAL JOIN flight_location JOIN Airport as A ON arrive_airport_code = A.airport_code JOIN Airport as B ON depart_airport_code = B.airport_code NATURAL JOIN flies NATURAL JOIN airplane
+WHERE departure_datetime > NOW() AND remaining_seats > 0 AND departure_datetime BETWEEN ? AND DATE_ADD(?, INTERVAL 1 DAY) AND depart_airport_code = ? AND arrive_airport_code = ? AND B.city = ? AND A.city = ?
+
+This query selects all flight details from a list of flights, filtered using many different criteria. Ticket price is dynamically calculated based on the total capacity, remaining seats, and base_price of each flight. In the code, only the optional conditions provided to the request are included in the query.
+
+2 Register
+INSERT INTO Customer (email, password) VALUES (?, ?)
+
+SELECT airline_name FROM airline WHERE airline_name = ?
+INSERT INTO airline_staff (username, password, first_name, last_name, airline_name) VALUES (?, ?, ?, ?, ?)
+
+	The first query inserts a customer to the database for customer login. The 2nd and 3rd queries first verify the existence of the airline, before inserting an airline staff to the database for staff login. 
+
+3 Login
+SELECT * FROM ${tableName} WHERE ${columnName} = ?
+
+This query is used for both customer and staff logins, to check which type is logging in, and whether that user exists and that the right password was entered.
+
+CUSTOMER USE CASES:
+1. View My flights
+SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, airplane_ID, airline_name, num_of_seats, ticket_price AS base_price
+FROM ticket NATURAL JOIN flight NATURAL JOIN flight_location NATURAL JOIN flies NATURAL JOIN airplane 
+WHERE payment_email = ?"
+
+	Selects all of the customer’s purchased tickets, displays all the relevant flight info. 
+
+2. Search for flights
+	SAME QUERY AS 1. View Public Info
+
+3. Purchase tickets: 
+SELECT CASE WHEN remaining_seats/num_of_seats > 0.2 THEN base_price ELSE base_price*1.25 END AS final_price FROM flight NATURAL JOIN flies NATURAL JOIN airplane WHERE flight_ID = ? AND departure_datetime = ?
+
+INSERT INTO ticket VALUES (0, ?, ?, ?, ?, ?, ?, ?, NOW())
+
+UPDATE flight SET remaining_seats = remaining_seats-1 WHERE flight_ID = ? AND departure_datetime = ?
+
+	First query selects the price of the flight. It chooses the base_price, or base_price *1.25 if the remaining seats is less than 20%. Second query inserts the ticket into the database using the provided details. Last query decreases the remaining seats left on the flight by 1.
+
+4. Cancel Trip: 
+SELECT flight_ID, departure_datetime FROM flight NATURAL JOIN ticket WHERE ticket_ID = ? AND departure_datetime > DATE_ADD(NOW(), INTERVAL 1 DAY)
+
+DELETE FROM ticket WHERE ticket_ID = ? AND payment_email = ? AND departure_datetime > DATE_ADD(NOW(), INTERVAL 1 DAY)
+
+UPDATE flight SET remaining_seats = remaining_seats+1 WHERE flight_ID = ? AND departure_datetime = ?
+
+	First query gets the flight details from the ticket. Second query deletes the ticket from the database. Last query uses the flight details to increase remaining seats by 1.
+	
+5. Give Ratings and Comment on previous flights: 
+SELECT * FROM rating WHERE email = ? AND flight_ID = ? AND  departure_datetime = ?
+SELECT * FROM comment WHERE email = ? AND flight_ID = ? AND  departure_datetime = ?
+
+UPDATE rating SET rating = ? WHERE email = ? AND flight_ID = ? AND departure_datetime = ?
+INSERT INTO rating (rating, email, flight_ID, departure_datetime) VALUES (?, ?, ?, ?)
+
+UPDATE comment SET comment = ? WHERE email = ? AND flight_ID = ? AND departure_datetime = ?
+INSERT INTO comment (comment, email, flight_ID, departure_datetime) VALUES (?, ?, ?, ?)
+
+	First and second queries first check if the user has made a comment or rating previously. The remaining queries are the update/insert queries for comment/rating. Update is used if the rating/comment is found to exist in the database. If it doesn’t exist, a new rating/comment is inserted.
+
+6.Track My Spending: 
+SELECT YEAR(purchases_datetime) AS year, MONTH(purchases_datetime) AS month, SUM(ticket_price) AS monthly_sum 
+FROM ticket WHERE payment_email = ? AND purchases_datetime BETWEEN CURDATE() - INTERVAL 6 MONTH AND NOW()
+GROUP BY YEAR(purchases_datetime), MONTH(purchases_datetime) ORDER BY YEAR(purchases_datetime) DESC, MONTH(purchases_datetime) DESC
+
+	This query sums all of the user’s ticket’s prices, and groups the sums for each (month, year). The actual code dynamically changes the SQL to include a date range instead of the past 6 months range in this query.
+
+7.Logout: 
+
+Airline Staff use cases:
+1. View flights: 
+SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, airline_name, num_of_seats,
+CASE WHEN remaining_seats/num_of_seats > 0.2 THEN base_price ELSE base_price*1.25 END AS base_price
+FROM flight NATURAL JOIN flight_location JOIN Airport as A ON arrive_airport_code = A.airport_code JOIN Airport as B ON depart_airport_code = B.airport_code NATURAL JOIN flies NATURAL JOIN airplane
+WHERE airline_name = ? AND departure_datetime BETWEEN ? AND ? AND depart_airport_code = ? AND arrive_airport_code = ? AND B.city = ? AND A.city = ?
+
+	This query is very similar to customer view flights, except it is filtered to see only flights from the staff’s airline, includes past flights, and defaults to BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 30 DAY) for the flight dates. The SQL for this query is dynamically modified in the code to include only the search terms included in the request.
+
+2. Create new flights: 
+SELECT num_of_seats FROM Airplane WHERE airline_name = ? AND airplane_ID = ?
+SELECT * FROM airplane_maintenance WHERE airplane_ID = ? AND airline_name = ? AND (? < start_datetime AND ? > start_datetime) OR (? < end_datetime AND ? > end_datetime)
+
+INSERT INTO flight (departure_datetime, arrival_datetime, base_price, remaining_seats, flight_status) VALUES (?, ?, ?, ?, "on-time")
+
+INSERT INTO flight_location (flight_ID, departure_datetime, depart_airport_code, arrive_airport_code) VALUES (?, ?, ?, ?)
+
+INSERT INTO flies (flight_ID, departure_datetime, airplane_ID, airline_name) VALUES (?, ?, ?, ?)
+
+	The first query finds the max seating for the aircraft being used - this is used to set remaining seats on the flight, which tracks the number of tickets available to sell. The second query checks to make sure no airplane maintenance for the plane conflicts with the flight time. The next 3 queries all insert the given flight details into their respective tables.
+
+3. Change Status of flights: 
+UPDATE flight SET flight_status = ? WHERE flight_ID = ? AND departure_datetime = ?
+
+	This query changes the flight status of the given flight to the given status.
+
+4. Add airplane in the system: 
+INSERT INTO airplane (airplane_ID, num_of_seats, manufacturing_company, model_number, age, airline_name) VALUES (0, ?, ?, ?, ?, ?)
+
+	This query inserts an airplane with the given details into the database.
+
+5. Add new airport in the system: 
+INSERT INTO airport VALUES (?, ?, ?, ?, ?, ?)
+
+	This query inserts an airport with the given details into the database.
+
+6. View flight ratings: 
+SELECT email, rating, comment FROM rating NATURAL LEFT JOIN comment WHERE flight_ID = ? AND departure_datetime = ?
+
+	This query selects all ratings and comments for a given flight. Our system makes ratings required for comments - you can’t leave a comment without a rating, thus the left join.
+
+7. Schedule Maintenance: 
+INSERT INTO airplane_maintenance VALUES (?, ?, ?, ?)
+
+	This query inserts an airplane maintenance period for the given flight.
+
+8. View frequent customers: 
+SELECT email, customer.first_name, customer.last_name, COUNT(ticket_ID) as total_tickets FROM customer JOIN ticket ON customer.email = ticket.payment_email NATURAL JOIN flies
+WHERE departure_datetime >= CURDATE() - INTERVAL 1 YEAR AND airline_name = ?
+GROUP BY email ORDER BY total_tickets DESC LIMIT 1
+
+SELECT flight_ID, departure_datetime, arrival_datetime, flight_status, depart_airport_code, arrive_airport_code, B.city AS departure_city, A.city AS arrival_city, airplane_ID, airline_name, num_of_seats
+FROM flight NATURAL JOIN flight_location JOIN Airport as A ON arrive_airport_code = A.airport_code JOIN Airport as B ON depart_airport_code = B.airport_code NATURAL JOIN flies NATURAL JOIN airplane NATURAL JOIN ticket
+WHERE ticket.payment_email = ? AND airline_name = ?
+
+	The first query gets the most frequent customer, by counting all customer’s tickets purchased within the past year for that airline, then selecting the customer with the most. The second query finds a list of all tickets for a specific customer, within a specific airline.
+
+9. View Earned Revenue: 
+SELECT sum(ticket_price) AS revenue FROM ticket NATURAL JOIN flight NATURAL JOIN flies WHERE airline_name = ? AND purchases_datetime > CURDATE() - INTERVAL 1 MONTH
+
+SELECT sum(ticket_price) AS revenue FROM ticket NATURAL JOIN flight NATURAL JOIN flies WHERE airline_name = ? AND purchases_datetime > CURDATE() - INTERVAL 1 YEAR
+
+	The first query sums all the tickets purchased from the airline within the last month. The second query does the same, for the last year.
+
+10. Logout:
+
+	We don’t use any queries for logging out. We are using JWT so we just delete the token and session in the front end.
