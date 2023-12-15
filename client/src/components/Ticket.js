@@ -70,7 +70,7 @@ const Ticket = (props) => {
       console.log(json1.error)
       return
     }
-    console.log(1)
+
     const response2 = await fetch('http://localhost:4000/api/flights/purchase_ticket', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -89,7 +89,6 @@ const Ticket = (props) => {
       console.log(json2.error)
       return
     }
-    console.log(2)
     navigate("/profile")
 
   }
